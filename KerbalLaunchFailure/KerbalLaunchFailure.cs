@@ -28,7 +28,7 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// Target chance that the failure will occur in flight.
         /// </summary>
-        private const float GuaranteeDuringFlight = 0.99F;
+        private const float ChanceWillOccurDuringFlight = 0.99F;
 #else
         /// <summary>
         /// Chance of launch failure: 1 in 'ChanceOfRUD'
@@ -191,7 +191,7 @@ namespace KerbalLaunchFailure
         private void CauseFailure()
         {
 #if DEBUG
-            Debug.LogWarning(PluginAbbreviation + " :: OMGZ!!! Launch Failure!! ABORT!!");
+            Debug.LogWarning(PluginName + " :: OMGZ!!! Launch Failure!! ABORT!!");
 #endif
         }
     }
