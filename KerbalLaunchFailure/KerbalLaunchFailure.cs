@@ -67,6 +67,11 @@ namespace KerbalLaunchFailure
         private const float DelayBetweenPartFailures = 0.2F;
 
         /// <summary>
+        /// If true, after the first part failure, the abort action group will automatically fire.
+        /// </summary>
+        private const bool DoAutoAbortActionGroup = true;
+
+        /// <summary>
         /// Is the failure script active?
         /// </summary>
         private bool isFailureScriptActive = false;
@@ -331,6 +336,16 @@ namespace KerbalLaunchFailure
 
                 // The fun part...
                 part.explode();
+
+                // Auto Abort
+                if (DoAutoAbortActionGroup)
+                {
+                    if (doomedParts.Count == 0 || currentPartIndex == 1)
+                    {
+                        FlightGlobals.ActiveVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
+                    }
+                }
+                
 
                 // If this is the last part, we need to kill the script.
                 if (currentPartIndex >= doomedParts.Count - 1)
