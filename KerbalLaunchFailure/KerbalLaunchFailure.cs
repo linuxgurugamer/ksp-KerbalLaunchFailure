@@ -246,8 +246,18 @@ namespace KerbalLaunchFailure
             foreach (Part part in doomedParts)
             {
 #if DEBUG
-                Debug.LogError(PluginName + " :: " + part.name + " (" + part.flightID + ") was doomed to explode.");
+                Debug.LogError(PluginName + " :: " + part.partInfo.title + " (" + part.flightID + ") was doomed to explode.");
 #endif
+                // Flight Log <-- Thanks to ferram4 for code inspiration.
+                if (part == startingPart)
+                {
+                    FlightLogger.eventLog.Add("[" + FormatMissionTime(FlightGlobals.ActiveVessel.missionTime) + "] Random failure and disassembly of " + part.partInfo.title + ".");
+                }
+                else
+                {
+                    FlightLogger.eventLog.Add("[" + FormatMissionTime(FlightGlobals.ActiveVessel.missionTime) + "] " + part.partInfo.title + " disassembly due to failure of " + startingPart.partInfo.title + ".");
+                }
+
                 part.explode();
             }
 
@@ -255,6 +265,11 @@ namespace KerbalLaunchFailure
             DestroyFailureRun();
         }
 
+        /// <summary>
+        /// Propagates failure through surrounding parts.
+        /// </summary>
+        /// <param name="part">The parent part.</param>
+        /// <param name="failureChance">Chance of failure for the next part.</param>
         private void FailurePropagate(Part part, double failureChance)
         {
             List<Part> potentialParts = new List<Part>();
@@ -344,6 +359,20 @@ namespace KerbalLaunchFailure
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Formats the mission elapsed time for the Flight Event log.
+        /// </summary>
+        /// <param name="rawMissionTime">The mission time.</param>
+        /// <returns>String formatted mission elapse time.</returns>
+        public static string FormatMissionTime(double rawMissionTime)
+        {
+            int time = (int)rawMissionTime % 3600;
+            int seconds = time % 60;
+            int minutes = (time / 60) % 60;
+            int hours = (time / 3600);
+            return hours.ToString("D2") + ":" + minutes.ToString("D2") + ":" + seconds.ToString("D2");
         }
     }
 }
