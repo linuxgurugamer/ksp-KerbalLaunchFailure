@@ -44,12 +44,27 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// Chance that the part explosion will propogate to attached part.
         /// </summary>
-        private const float FailurePropagateChance = 0.95F;
+        private const float FailurePropagateChance = 0.8F;
+
+        /// <summary>
+        /// The percentage resource remaining that causes the tank to have a 100% explosion chance.
+        /// </summary>
+        private const float ExplosiveTankThreshold = 0.05F;
+
+        /// <summary>
+        /// If set true, the failure rate will decrease with each propagation.
+        /// </summary>
+        private const bool PropagationChanceDecreases = true;
 
         /// <summary>
         /// Rough estimate for how long the script should run, not accounting for the Atm to Space transition.
         /// </summary>
         private const int TimeToOrbit = 4 * 60;
+
+        /// <summary>
+        /// The list of parts that will explode.
+        /// </summary>
+        private List<Part> doomedParts;
 
         /// <summary>
         /// The calclulated change per game tick that the failure does occur: 1 in 'calculatedChancePerTick'
@@ -119,6 +134,7 @@ namespace KerbalLaunchFailure
             }
             else
             {
+                // Since there will be no need to run the script, destroy it.
                 DestroyFailureRun();
             }
         }
@@ -178,6 +194,10 @@ namespace KerbalLaunchFailure
             float ticksPerSecond = 1 / GameSettings.PHYSICS_FRAME_DT_LIMIT;
             float totalTicks = ticksPerSecond * TimeToOrbit;
             calculatedChancePerTick = (int)(1.0 / (1.0 - Math.Pow(1.0 - ChanceWillOccurDuringFlight, 1.0 / totalTicks)));
+#if DEBUG
+            Debug.LogWarning(PluginName + " :: totalTicks used is " + totalTicks + ".");
+            Debug.LogWarning(PluginName + " :: calculatedChancePerTick is " + calculatedChancePerTick + ".");
+#endif
         }
 
         private void CheckForFailure()
@@ -188,11 +208,124 @@ namespace KerbalLaunchFailure
             }
         }
 
+        private static bool PartIsActiveEngine(Part part)
+        {
+            List<ModuleEngines> engineModules = part.Modules.OfType<ModuleEngines>().ToList();
+            List<ModuleEnginesFX> engineFXModules = part.Modules.OfType<ModuleEnginesFX>().ToList();
+            
+            foreach (ModuleEngines engineModule in engineModules)
+            {
+                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
+                {
+                    return true;
+                }
+            }
+
+            foreach (ModuleEnginesFX engineModule in engineFXModules)
+            {
+                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool PartIsExplosiveFuelTank(Part part)
+        {
+            foreach (PartResource resource in part.Resources)
+            {
+                if (resource.maxAmount > 0 && resource.amount / resource.maxAmount > ExplosiveTankThreshold)
+                {
+                    switch (resource.resourceName)
+                    {
+                        case "LiquidFuel":
+                        case "Oxidizer":
+                        case "MonoPropellant":
+                        case "SolidFuel":
+                            return true;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return false;
+        }
+
         private void CauseFailure()
         {
+            // Find engines
+            List<Part> activeEngineParts = FlightGlobals.ActiveVessel.GetActiveParts().Where(o => PartIsActiveEngine(o)).ToList();
+
+            // If there are no active engines, skip this attempt.
+            if (activeEngineParts.Count == 0)
+            {
+                return;
+            }
+
 #if DEBUG
-            Debug.LogWarning(PluginName + " :: OMGZ!!! Launch Failure!! ABORT!!");
+            Debug.LogError(PluginName + " :: Launch Failure!!");
 #endif
+
+            // The parts that will explode.
+            doomedParts = new List<Part>();
+
+            // Determine the starting part.
+            int startingPartIndex = rand.Next(0, activeEngineParts.Count);
+            Part startingPart = activeEngineParts[startingPartIndex];
+
+            // Add the starting part to the doomed parts list.
+            doomedParts.Add(startingPart);
+
+            // Propagate to sourrounding parts.
+            FailurePropagate(startingPart, FailurePropagateChance);
+
+            // Explode each doomed part.
+            foreach (Part part in doomedParts)
+            {
+#if DEBUG
+                Debug.LogError(PluginName + " :: " + part.name + " (" + part.flightID + ") was doomed to explode.");
+#endif
+                part.explode();
+            }
+
+            // Destroy the script.
+            DestroyFailureRun();
+        }
+
+        private void FailurePropagate(Part part, double failureChance)
+        {
+            List<Part> potentialParts = new List<Part>();
+
+            // Calculate the next propagation's failure chance.
+            double nextFailureChance = (PropagationChanceDecreases) ? failureChance * FailurePropagateChance : failureChance;
+
+            // Parent
+            if (!doomedParts.Contains(part.parent))
+            {
+                potentialParts.Add(part.parent);
+            }
+
+            // Children
+            foreach (Part childPart in part.children)
+            {
+                if (!doomedParts.Contains(childPart))
+                {
+                    potentialParts.Add(childPart);
+                }
+            }
+
+            // For each potential part, see if it fails and then propagate it.
+            foreach (Part potentialPart in potentialParts)
+            {
+                double thisFailureChance = (PartIsExplosiveFuelTank(potentialPart)) ? 1 : failureChance;
+                if (!doomedParts.Contains(potentialPart) && rand.NextDouble() < thisFailureChance)
+                {
+                    doomedParts.Add(potentialPart);
+                    FailurePropagate(potentialPart, nextFailureChance);
+                }
+            }
         }
     }
 }
