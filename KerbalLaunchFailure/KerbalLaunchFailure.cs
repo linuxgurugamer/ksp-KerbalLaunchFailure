@@ -33,7 +33,7 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// Chance of launch failure: 1 in 'ChanceOfRUD'
         /// </summary>
-        private const int ChanceOfRUD = 51;
+        private const int ChanceOfRUD = 50;
 
         /// <summary>
         /// Target chance that the failure will occur in flight.
@@ -200,6 +200,9 @@ namespace KerbalLaunchFailure
 #endif
         }
 
+        /// <summary>
+        /// Checks if there is a failure now, and if so, causes the failure.
+        /// </summary>
         private void CheckForFailure()
         {
             if (rand.Next(0, calculatedChancePerTick) == 0)
@@ -208,51 +211,9 @@ namespace KerbalLaunchFailure
             }
         }
 
-        private static bool PartIsActiveEngine(Part part)
-        {
-            List<ModuleEngines> engineModules = part.Modules.OfType<ModuleEngines>().ToList();
-            List<ModuleEnginesFX> engineFXModules = part.Modules.OfType<ModuleEnginesFX>().ToList();
-            
-            foreach (ModuleEngines engineModule in engineModules)
-            {
-                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
-                {
-                    return true;
-                }
-            }
-
-            foreach (ModuleEnginesFX engineModule in engineFXModules)
-            {
-                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool PartIsExplosiveFuelTank(Part part)
-        {
-            foreach (PartResource resource in part.Resources)
-            {
-                if (resource.maxAmount > 0 && resource.amount / resource.maxAmount > ExplosiveTankThreshold)
-                {
-                    switch (resource.resourceName)
-                    {
-                        case "LiquidFuel":
-                        case "Oxidizer":
-                        case "MonoPropellant":
-                        case "SolidFuel":
-                            return true;
-                        default:
-                            break;
-                    }
-                }
-            }
-            return false;
-        }
-
+        /// <summary>
+        /// Causes an active engine to explode and propagate.
+        /// </summary>
         private void CauseFailure()
         {
             // Find engines
@@ -326,6 +287,63 @@ namespace KerbalLaunchFailure
                     FailurePropagate(potentialPart, nextFailureChance);
                 }
             }
+        }
+
+        /// <summary>
+        /// Determines if part is an active engine.
+        /// </summary>
+        /// <param name="part">The part to check.</param>
+        /// <returns>True if an active engine, false if not.</returns>
+        private static bool PartIsActiveEngine(Part part)
+        {
+            // Thanks to Ippo for the code inspiration here.
+            List<ModuleEngines> engineModules = part.Modules.OfType<ModuleEngines>().ToList();
+            List<ModuleEnginesFX> engineFXModules = part.Modules.OfType<ModuleEnginesFX>().ToList();
+
+            foreach (ModuleEngines engineModule in engineModules)
+            {
+                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
+                {
+                    return true;
+                }
+            }
+
+            foreach (ModuleEnginesFX engineModule in engineFXModules)
+            {
+                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Determines if the part has enough explosive fuel to guarantee an explosion.
+        /// </summary>
+        /// <param name="part">The part to check.</param>
+        /// <returns>True if valid, false is not.</returns>
+        private static bool PartIsExplosiveFuelTank(Part part)
+        {
+            // There's gotta be a better way to do this.
+            foreach (PartResource resource in part.Resources)
+            {
+                if (resource.maxAmount > 0 && resource.amount / resource.maxAmount > ExplosiveTankThreshold)
+                {
+                    switch (resource.resourceName)
+                    {
+                        case "LiquidFuel":
+                        case "Oxidizer":
+                        case "MonoPropellant":
+                        case "SolidFuel":
+                            return true;
+                        default:
+                            break;
+                    }
+                }
+            }
+            return false;
         }
     }
 }
