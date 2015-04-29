@@ -67,11 +67,6 @@ namespace KerbalLaunchFailure
         private List<Part> doomedParts;
 
         /// <summary>
-        /// The calclulated change per game tick that the failure does occur: 1 in 'calculatedChancePerTick'
-        /// </summary>
-        private int calculatedChancePerTick;
-
-        /// <summary>
         /// Is the failure script active?
         /// </summary>
         private bool isActive = false;
@@ -87,13 +82,37 @@ namespace KerbalLaunchFailure
         private static System.Random rand = new System.Random();
 
         /// <summary>
+        /// The target number of times Update will run per second.
+        /// </summary>
+        private float GameTicksPerSecond
+        {
+            get { return 1.0F / GameSettings.PHYSICS_FRAME_DT_LIMIT; }
+        }
+
+        /// <summary>
+        /// Estimated ticks to orbit.
+        /// </summary>
+        private float EstimatedTicksToOrbit
+        {
+            get { return GameTicksPerSecond * TimeToOrbit; }
+        }
+
+        /// <summary>
+        /// The chance per tick the launch will fail during flight: 1 in 'FailureChancePerTick'
+        /// </summary>
+        private int FailureChancePerTick
+        {
+            get
+            {
+                return (int)(1.0 / (1.0 - Math.Pow(1.0 - ChanceWillOccurDuringFlight, 1.0 / EstimatedTicksToOrbit)));
+            }
+        }
+
+        /// <summary>
         /// Called when script instance is being loaded.
         /// </summary>
         public void Awake()
         {
-            // Calculate the chance per tick.
-            CalculateChancePerTick();
-
             // When a launch occurs, start failure script.
             GameEvents.onLaunch.Add(FailureStartHandler);
 
@@ -186,26 +205,11 @@ namespace KerbalLaunchFailure
         }
 
         /// <summary>
-        /// Calculates the chance per tick the launch will fail. This is dependent on the setting:
-        /// PHYSICS_FRAME_DT_LIMIT
-        /// </summary>
-        private void CalculateChancePerTick()
-        {
-            float ticksPerSecond = 1 / GameSettings.PHYSICS_FRAME_DT_LIMIT;
-            float totalTicks = ticksPerSecond * TimeToOrbit;
-            calculatedChancePerTick = (int)(1.0 / (1.0 - Math.Pow(1.0 - ChanceWillOccurDuringFlight, 1.0 / totalTicks)));
-#if DEBUG
-            Debug.LogWarning(PluginName + " :: totalTicks used is " + totalTicks + ".");
-            Debug.LogWarning(PluginName + " :: calculatedChancePerTick is " + calculatedChancePerTick + ".");
-#endif
-        }
-
-        /// <summary>
         /// Checks if there is a failure now, and if so, causes the failure.
         /// </summary>
         private void CheckForFailure()
         {
-            if (rand.Next(0, calculatedChancePerTick) == 0)
+            if (rand.Next(0, FailureChancePerTick) == 0)
             {
                 CauseFailure();
             }
@@ -227,6 +231,8 @@ namespace KerbalLaunchFailure
 
 #if DEBUG
             Debug.LogError(PluginName + " :: Launch Failure!!");
+            Debug.LogWarning(PluginName + " :: GameTicksPerSecond used is " + GameTicksPerSecond + ".");
+            Debug.LogWarning(PluginName + " :: FailureChancePerTick is " + FailureChancePerTick + ".");
 #endif
 
             // The parts that will explode.
@@ -278,9 +284,12 @@ namespace KerbalLaunchFailure
             double nextFailureChance = (PropagationChanceDecreases) ? failureChance * FailurePropagateChance : failureChance;
 
             // Parent
-            if (!doomedParts.Contains(part.parent))
+            if (part.parent)
             {
-                potentialParts.Add(part.parent);
+                if (!doomedParts.Contains(part.parent))
+                {
+                    potentialParts.Add(part.parent);
+                }
             }
 
             // Children
@@ -366,7 +375,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         /// <param name="rawMissionTime">The mission time.</param>
         /// <returns>String formatted mission elapse time.</returns>
-        public static string FormatMissionTime(double rawMissionTime)
+        private static string FormatMissionTime(double rawMissionTime)
         {
             int time = (int)rawMissionTime % 3600;
             int seconds = time % 60;
