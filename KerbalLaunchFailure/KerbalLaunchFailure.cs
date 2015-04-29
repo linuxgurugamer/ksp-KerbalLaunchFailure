@@ -62,19 +62,39 @@ namespace KerbalLaunchFailure
         private const int TimeToOrbit = 4 * 60;
 
         /// <summary>
-        /// The list of parts that will explode.
+        /// The delay between part failures.
         /// </summary>
-        private List<Part> doomedParts;
+        private const float DelayBetweenPartFailures = 0.2F;
 
         /// <summary>
         /// Is the failure script active?
         /// </summary>
-        private bool isActive = false;
+        private bool isFailureScriptActive = false;
 
         /// <summary>
         /// Is the game paused?
         /// </summary>
         private bool isGamePaused = false;
+
+        /// <summary>
+        /// The list of parts that will explode.
+        /// </summary>
+        private List<Part> doomedParts;
+
+        /// <summary>
+        /// Is the part failure loop in progress?
+        /// </summary>
+        private bool isFailureInProgress;
+
+        /// <summary>
+        /// The number of game ticks between part faulures.
+        /// </summary>
+        private int ticksBetweenPartFailures;
+
+        /// <summary>
+        /// The number of game ticks since the failure sequence started.
+        /// </summary>
+        private int ticksSinceFailureStart;
 
         /// <summary>
         /// The RNG used.
@@ -127,7 +147,7 @@ namespace KerbalLaunchFailure
         public void Update()
         {
             // Only run if the failure script is active and the game is not paused.
-            if (isActive && !isGamePaused)
+            if (isFailureScriptActive && !isGamePaused)
             {
                 CheckForFailure();
             }
@@ -188,7 +208,8 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void ActivateFailureRun()
         {
-            isActive = true;
+            isFailureScriptActive = true;
+            isFailureInProgress = false;
             GameEvents.VesselSituation.onReachSpace.Add(FailureEndHandler);
         }
 
@@ -197,7 +218,8 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void DestroyFailureRun()
         {
-            isActive = false;
+            isFailureScriptActive = false;
+            isFailureInProgress = false;
             GameEvents.onLaunch.Remove(FailureStartHandler);
             GameEvents.onGamePause.Remove(FailureGamePauseHandler);
             GameEvents.onGameUnpause.Remove(FaulureGameUnpauseHandler);
@@ -209,7 +231,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void CheckForFailure()
         {
-            if (rand.Next(0, FailureChancePerTick) == 0)
+            if (rand.Next(0, FailureChancePerTick) == 0 || isFailureInProgress)
             {
                 CauseFailure();
             }
@@ -220,6 +242,34 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void CauseFailure()
         {
+            // Prepare the failure sequence if not already in progress.
+            if (!isFailureInProgress)
+            {
+                PrepareFailure();
+            }
+
+            // If not doomed parts found, just skip this failure attempt.
+            if (doomedParts.Count == 0)
+            {
+                isFailureInProgress = false;
+                return;
+            }
+
+            // Explode the next part based on number of game ticks since start.
+            ExplodeNextDoomedPart();
+
+            // Increment number of game ticks since start.
+            ticksSinceFailureStart++;
+        }
+
+        /// <summary>
+        /// Does all the prep work for the explosion loop.
+        /// </summary>
+        private void PrepareFailure()
+        {
+            // The parts that will explode.
+            doomedParts = new List<Part>();
+
             // Find engines
             List<Part> activeEngineParts = FlightGlobals.ActiveVessel.GetActiveParts().Where(o => PartIsActiveEngine(o)).ToList();
 
@@ -228,15 +278,6 @@ namespace KerbalLaunchFailure
             {
                 return;
             }
-
-#if DEBUG
-            Debug.LogError(PluginName + " :: Launch Failure!!");
-            Debug.LogWarning(PluginName + " :: GameTicksPerSecond used is " + GameTicksPerSecond + ".");
-            Debug.LogWarning(PluginName + " :: FailureChancePerTick is " + FailureChancePerTick + ".");
-#endif
-
-            // The parts that will explode.
-            doomedParts = new List<Part>();
 
             // Determine the starting part.
             int startingPartIndex = rand.Next(0, activeEngineParts.Count);
@@ -248,27 +289,56 @@ namespace KerbalLaunchFailure
             // Propagate to sourrounding parts.
             FailurePropagate(startingPart, FailurePropagateChance);
 
-            // Explode each doomed part.
-            foreach (Part part in doomedParts)
+            // Setup for the part explosion loop.
+            isFailureInProgress = true;
+            ticksBetweenPartFailures = (int)(GameTicksPerSecond * DelayBetweenPartFailures);
+            ticksSinceFailureStart = 0;
+
+#if DEBUG
+            Debug.LogError(PluginName + " :: Launch Failure!!");
+            Debug.LogWarning(PluginName + " :: GameTicksPerSecond used is " + GameTicksPerSecond + ".");
+            Debug.LogWarning(PluginName + " :: FailureChancePerTick is " + FailureChancePerTick + ".");
+            Debug.LogWarning(PluginName + " :: ticksBetweenPartFailures is " + ticksBetweenPartFailures + ".");
+#endif
+        }
+
+        /// <summary>
+        /// Determines the next doomed part to explode based on game ticks since start.
+        /// </summary>
+        private void ExplodeNextDoomedPart()
+        {
+            // Only activate on certain ticks.
+            if (ticksSinceFailureStart % ticksBetweenPartFailures == 0)
             {
+                // Determine the part to explode.
+                int currentPartIndex = ticksSinceFailureStart / ticksBetweenPartFailures;
+                Part part = doomedParts[currentPartIndex];
+
 #if DEBUG
                 Debug.LogError(PluginName + " :: " + part.partInfo.title + " (" + part.flightID + ") was doomed to explode.");
+                Debug.LogError(PluginName + " :: Current Tick is " + ticksSinceFailureStart + ".");
 #endif
-                // Flight Log <-- Thanks to ferram4 for code inspiration.
-                if (part == startingPart)
+
+                // The 0 index is the starting part.
+                if (currentPartIndex == 0)
                 {
                     FlightLogger.eventLog.Add("[" + FormatMissionTime(FlightGlobals.ActiveVessel.missionTime) + "] Random failure and disassembly of " + part.partInfo.title + ".");
                 }
                 else
                 {
-                    FlightLogger.eventLog.Add("[" + FormatMissionTime(FlightGlobals.ActiveVessel.missionTime) + "] " + part.partInfo.title + " disassembly due to failure of " + startingPart.partInfo.title + ".");
+                    FlightLogger.eventLog.Add("[" + FormatMissionTime(FlightGlobals.ActiveVessel.missionTime) + "] " + part.partInfo.title + " disassembly due to failure of " + doomedParts[0].partInfo.title + ".");
                 }
 
+                // The fun part...
                 part.explode();
-            }
 
-            // Destroy the script.
-            DestroyFailureRun();
+                // If this is the last part, we need to kill the script.
+                if (currentPartIndex >= doomedParts.Count - 1)
+                {
+                    // Destroy the script.
+                    DestroyFailureRun();
+                }
+            }
         }
 
         /// <summary>
