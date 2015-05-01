@@ -17,7 +17,7 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// The maximum altitude as a percentage in which the failure can begin.
         /// </summary>
-        private const float MaxFailureAltitudePercentage = 0.25F;
+        private const float MaxFailureAltitudePercentage = 0.075F;
 #else
         /// <summary>
         /// Chance of launch failure: 1 in 'ChanceOfRUD'
@@ -33,12 +33,12 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// If set true, the failure rate will decrease with each propagation.
         /// </summary>
-        private const bool PropagationChanceDecreases = true;
+        private const bool PropagationChanceDecreases = false;
 
         /// <summary>
-        /// Chance that the part explosion will propogate to attached part.
+        /// Chance that the part explosion will propogate to attached part. Fuel tanks are handled differently.
         /// </summary>
-        private const float FailurePropagateChance = 0.8F;
+        private const float FailurePropagateChance = 0.7F;
 
         /// <summary>
         /// The delay between part failures.
@@ -48,7 +48,7 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// If true, after the first part failure, the abort action group will automatically fire.
         /// </summary>
-        private const bool DoAutoAbortActionGroup = false;
+        private const bool DoAutoAbortActionGroup = true;
 
         /// <summary>
         /// The active flight vessel.
@@ -66,7 +66,22 @@ namespace KerbalLaunchFailure
         private readonly int altitudeFailureOccurs;
 
         /// <summary>
-        /// The list of parts set to explode.
+        /// The starting part of the failure.
+        /// </summary>
+        private Part startingPart;
+
+        /// <summary>
+        /// The engine module of the starting part.
+        /// </summary>
+        private ModuleEngines startingPartEngineModule;
+
+        /// <summary>
+        /// The amount of extra force to add to the failing engine.
+        /// </summary>
+        private int thrustOverload;
+
+        /// <summary>
+        /// The list of parts set to explode after the starting part.
         /// </summary>
         private List<Part> doomedParts;
 
@@ -116,30 +131,96 @@ namespace KerbalLaunchFailure
             if (activeVessel.altitude < altitudeFailureOccurs) return true;
 
             // Prepare the doomed parts if not done so.
-            if (doomedParts == null)
+            if (startingPart == null && doomedParts == null)
             {
-                PrepareDoomedParts();
+                PrepareStartingPart();
             }
 
             // If parts have been found.
-            if (doomedParts != null)
+            if (startingPart != null || doomedParts != null)
             {
-                try
+                if (startingPart != null)
                 {
-                    // Will attempt to explode the next part.
-                    ExplodeNextDoomedPart();
+                    CauseStartingPartFailure();
                 }
-                catch (ArgumentOutOfRangeException)
+                else if (doomedParts != null)
                 {
-                    // This occurs when there are no more parts to explode.
-                    return false;
+                    try
+                    {
+                        // Will attempt to explode the next part.
+                        ExplodeNextDoomedPart();
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        // This occurs when there are no more parts to explode.
+                        return false;
+                    }
                 }
                 // Increase the ticks.
                 ticksSinceFailureStart++;
             }
 
+
             // Tell caller to continue run.
             return true;
+        }
+
+        /// <summary>
+        /// Determines the starting part in the failure.
+        /// </summary>
+        private void PrepareStartingPart()
+        {
+            // Find engines
+            List<Part> activeEngineParts = activeVessel.GetActiveParts().Where(o => KLFUtils.PartIsActiveEngine(o)).ToList();
+
+            // If there are no active engines, skip this attempt.
+            if (activeEngineParts.Count == 0) return;
+
+            // Determine the starting part.
+            int startingPartIndex = KLFUtils.RNG.Next(0, activeEngineParts.Count);
+            startingPart = activeEngineParts[startingPartIndex];
+
+            // Get the engine module for the part.
+            startingPartEngineModule = startingPart.Modules.OfType<ModuleEngines>().Single();
+
+            // Setup tick information for the part explosion loop.
+            ticksBetweenPartExplosions = (int)(KLFUtils.GameTicksPerSecond * DelayBetweenPartFailures);
+            ticksSinceFailureStart = 0;
+            thrustOverload = 0;
+        }
+
+        /// <summary>
+        /// Causes the starting part's failure.
+        /// </summary>
+        private void CauseStartingPartFailure()
+        {
+            // If a valid game tick.
+            if (ticksSinceFailureStart % ticksBetweenPartExplosions == 0)
+            {
+                // Need to start overloading the thrust and increase the part's temperature.
+                thrustOverload += (int)(startingPartEngineModule.maxThrust / 30.0);
+                startingPartEngineModule.rigidbody.AddRelativeForce(Vector3.forward * thrustOverload);
+                startingPart.temperature += startingPart.maxTemp / 20.0;
+            }
+
+            // When the part explodes to overheating.
+            if (startingPart.temperature >= startingPart.maxTemp)
+            {
+                // Log flight data.
+                KLFUtils.LogFlightData(activeVessel, "Random failure of " + startingPart.partInfo.title + ".");
+
+                // If the auto abort sequence is on and this is the starting part, trigger the Abort action group.
+                if (DoAutoAbortActionGroup)
+                {
+                    activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
+                }
+
+                // Gather the doomed parts at the time of failure.
+                PrepareDoomedParts();
+
+                // Nullify the starting part.
+                startingPart = null;
+            }
         }
 
         /// <summary>
@@ -167,25 +248,11 @@ namespace KerbalLaunchFailure
             // Tick was invalid here.
             if (nextDoomedPart == null) return;
 
-            // Log different data if it is the starting part.
-            if (nextDoomedPart == doomedParts[0])
-            {
-                KLFUtils.LogFlightData(activeVessel, "Random failure and disassembly of " + nextDoomedPart.partInfo.title + ".");
-            }
-            else
-            {
-                KLFUtils.LogFlightData(activeVessel, nextDoomedPart.partInfo.title + " disassembly due to failure of " + doomedParts[0].partInfo.title + ".");
-            }
+            // Log flight data.
+            KLFUtils.LogFlightData(activeVessel, nextDoomedPart.partInfo.title + " disassembly due to an earlier failure.");
 
             // The fun stuff...
             nextDoomedPart.explode();
-
-            // If the auto abort sequence is on and this is the starting part, trigger the Abort action group.
-            if (DoAutoAbortActionGroup && nextDoomedPart == doomedParts[0])
-            {
-                activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
-            }
-
         }
 
         /// <summary>
@@ -193,28 +260,20 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void PrepareDoomedParts()
         {
-            // Find engines
-            List<Part> activeEngineParts = activeVessel.GetActiveParts().Where(o => KLFUtils.PartIsActiveEngine(o)).ToList();
-
-            // If there are no active engines, skip this attempt.
-            if (activeEngineParts.Count == 0) return;
-
             // The parts that will explode.
             doomedParts = new List<Part>();
 
-            // Determine the starting part.
-            int startingPartIndex = KLFUtils.RNG.Next(0, activeEngineParts.Count);
-            Part startingPart = activeEngineParts[startingPartIndex];
-
-            // Add the starting part to the doomed parts list.
+            // Add the starting part to the doomed parts list. Simpler code in propagate.
             doomedParts.Add(startingPart);
 
             // Propagate to sourrounding parts.
             PropagateFailure(startingPart, FailurePropagateChance);
 
-            // Setup tick information for the part explosion loop.
-            ticksBetweenPartExplosions = (int)(KLFUtils.GameTicksPerSecond * DelayBetweenPartFailures);
-            ticksSinceFailureStart = 0;
+            // Remove the starting part. This will be handled differently.
+            doomedParts.RemoveAt(0);
+
+            // Setup tick information.
+            ticksSinceFailureStart = -ticksBetweenPartExplosions;
         }
 
         /// <summary>
