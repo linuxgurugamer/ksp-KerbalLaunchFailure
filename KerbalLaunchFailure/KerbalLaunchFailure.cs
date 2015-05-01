@@ -55,7 +55,7 @@ namespace KerbalLaunchFailure
             // Only run if the failure script is active and the game is not paused.
             if (isFailureScriptActive && !isGamePaused)
             {
-                CheckForFailure();
+                RunFailure();
             }
         }
 
@@ -115,6 +115,7 @@ namespace KerbalLaunchFailure
         private void ActivateFailureRun()
         {
             isFailureScriptActive = true;
+            isGamePaused = false;
             failure = new Failure();
             GameEvents.VesselSituation.onReachSpace.Add(FailureEndHandler);
         }
@@ -125,6 +126,7 @@ namespace KerbalLaunchFailure
         private void DestroyFailureRun()
         {
             isFailureScriptActive = false;
+            isGamePaused = false;
             failure = null;
             GameEvents.onLaunch.Remove(FailureStartHandler);
             GameEvents.onGamePause.Remove(FailureGamePauseHandler);
@@ -133,9 +135,9 @@ namespace KerbalLaunchFailure
         }
 
         /// <summary>
-        /// Checks if there is a failure now, and if so, causes the failure.
+        /// Runs the failure.
         /// </summary>
-        private void CheckForFailure()
+        private void RunFailure()
         {
             if (!failure.Run())
             {
