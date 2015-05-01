@@ -35,7 +35,7 @@ namespace KerbalLaunchFailure
 
             foreach (ModuleEngines engineModule in engineModules)
             {
-                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
+                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0 && !engineModule.getFlameoutState)
                 {
                     return true;
                 }
@@ -43,7 +43,7 @@ namespace KerbalLaunchFailure
 
             foreach (ModuleEnginesFX engineModule in engineFXModules)
             {
-                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
+                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0 && !engineModule.getFlameoutState)
                 {
                     return true;
                 }
