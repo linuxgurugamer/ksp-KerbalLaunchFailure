@@ -12,64 +12,12 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// The plugin's name.
         /// </summary>
-        private const string PluginName = "Kerbal Launch Failure";
+        public const string PluginName = "Kerbal Launch Failure";
 
         /// <summary>
         /// The plugin's abbreviated name.
         /// </summary>
-        private const string PluginAbbreviation = "KLF";
-
-#if DEBUG
-        /// <summary>
-        /// Chance of launch failure: always.
-        /// </summary>
-        private const int ChanceOfRUD = 1;
-
-        /// <summary>
-        /// Target chance that the failure will occur in flight.
-        /// </summary>
-        private const float ChanceWillOccurDuringFlight = 0.99F;
-#else
-        /// <summary>
-        /// Chance of launch failure: 1 in 'ChanceOfRUD'
-        /// </summary>
-        private const int ChanceOfRUD = 50;
-
-        /// <summary>
-        /// Target chance that the failure will occur in flight.
-        /// </summary>
-        private const float ChanceWillOccurDuringFlight = 0.9F;
-#endif
-
-        /// <summary>
-        /// Chance that the part explosion will propogate to attached part.
-        /// </summary>
-        private const float FailurePropagateChance = 0.8F;
-
-        /// <summary>
-        /// The percentage resource remaining that causes the tank to have a 100% explosion chance.
-        /// </summary>
-        private const float ExplosiveTankThreshold = 0.05F;
-
-        /// <summary>
-        /// If set true, the failure rate will decrease with each propagation.
-        /// </summary>
-        private const bool PropagationChanceDecreases = true;
-
-        /// <summary>
-        /// Rough estimate for how long the script should run, not accounting for the Atm to Space transition.
-        /// </summary>
-        private const int TimeToOrbit = 4 * 60;
-
-        /// <summary>
-        /// The delay between part failures.
-        /// </summary>
-        private const float DelayBetweenPartFailures = 0.2F;
-
-        /// <summary>
-        /// If true, after the first part failure, the abort action group will automatically fire.
-        /// </summary>
-        private const bool DoAutoAbortActionGroup = true;
+        public const string PluginAbbreviation = "KLF";
 
         /// <summary>
         /// Is the failure script active?
@@ -82,56 +30,9 @@ namespace KerbalLaunchFailure
         private bool isGamePaused = false;
 
         /// <summary>
-        /// The list of parts that will explode.
+        /// The failure that runs.
         /// </summary>
-        private List<Part> doomedParts;
-
-        /// <summary>
-        /// Is the part failure loop in progress?
-        /// </summary>
-        private bool isFailureInProgress;
-
-        /// <summary>
-        /// The number of game ticks between part faulures.
-        /// </summary>
-        private int ticksBetweenPartFailures;
-
-        /// <summary>
-        /// The number of game ticks since the failure sequence started.
-        /// </summary>
-        private int ticksSinceFailureStart;
-
-        /// <summary>
-        /// The RNG used.
-        /// </summary>
-        private static System.Random rand = new System.Random();
-
-        /// <summary>
-        /// The target number of times Update will run per second.
-        /// </summary>
-        private float GameTicksPerSecond
-        {
-            get { return 1.0F / GameSettings.PHYSICS_FRAME_DT_LIMIT; }
-        }
-
-        /// <summary>
-        /// Estimated ticks to orbit.
-        /// </summary>
-        private float EstimatedTicksToOrbit
-        {
-            get { return GameTicksPerSecond * TimeToOrbit; }
-        }
-
-        /// <summary>
-        /// The chance per tick the launch will fail during flight: 1 in 'FailureChancePerTick'
-        /// </summary>
-        private int FailureChancePerTick
-        {
-            get
-            {
-                return (int)(1.0 / (1.0 - Math.Pow(1.0 - ChanceWillOccurDuringFlight, 1.0 / EstimatedTicksToOrbit)));
-            }
-        }
+        private Failure failure;
 
         /// <summary>
         /// Called when script instance is being loaded.
@@ -172,7 +73,7 @@ namespace KerbalLaunchFailure
         /// <param name="eventReport">Event Report from action.</param>
         private void FailureStartHandler(EventReport eventReport)
         {
-            if (rand.Next(0, ChanceOfRUD) == 0)
+            if (Failure.Occurs())
             {
                 ActivateFailureRun();
             }
@@ -214,7 +115,7 @@ namespace KerbalLaunchFailure
         private void ActivateFailureRun()
         {
             isFailureScriptActive = true;
-            isFailureInProgress = false;
+            failure = new Failure();
             GameEvents.VesselSituation.onReachSpace.Add(FailureEndHandler);
         }
 
@@ -224,7 +125,7 @@ namespace KerbalLaunchFailure
         private void DestroyFailureRun()
         {
             isFailureScriptActive = false;
-            isFailureInProgress = false;
+            failure = null;
             GameEvents.onLaunch.Remove(FailureStartHandler);
             GameEvents.onGamePause.Remove(FailureGamePauseHandler);
             GameEvents.onGameUnpause.Remove(FaulureGameUnpauseHandler);
@@ -236,237 +137,10 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void CheckForFailure()
         {
-            if (rand.Next(0, FailureChancePerTick) == 0 || isFailureInProgress)
+            if (!failure.Run())
             {
-                CauseFailure();
+                DestroyFailureRun();
             }
-        }
-
-        /// <summary>
-        /// Causes an active engine to explode and propagate.
-        /// </summary>
-        private void CauseFailure()
-        {
-            // Prepare the failure sequence if not already in progress.
-            if (!isFailureInProgress)
-            {
-                PrepareFailure();
-            }
-
-            // If not doomed parts found, just skip this failure attempt.
-            if (doomedParts.Count == 0)
-            {
-                isFailureInProgress = false;
-                return;
-            }
-
-            // Explode the next part based on number of game ticks since start.
-            ExplodeNextDoomedPart();
-
-            // Increment number of game ticks since start.
-            ticksSinceFailureStart++;
-        }
-
-        /// <summary>
-        /// Does all the prep work for the explosion loop.
-        /// </summary>
-        private void PrepareFailure()
-        {
-            // The parts that will explode.
-            doomedParts = new List<Part>();
-
-            // Find engines
-            List<Part> activeEngineParts = FlightGlobals.ActiveVessel.GetActiveParts().Where(o => PartIsActiveEngine(o)).ToList();
-
-            // If there are no active engines, skip this attempt.
-            if (activeEngineParts.Count == 0)
-            {
-                return;
-            }
-
-            // Determine the starting part.
-            int startingPartIndex = rand.Next(0, activeEngineParts.Count);
-            Part startingPart = activeEngineParts[startingPartIndex];
-
-            // Add the starting part to the doomed parts list.
-            doomedParts.Add(startingPart);
-
-            // Propagate to sourrounding parts.
-            FailurePropagate(startingPart, FailurePropagateChance);
-
-            // Setup for the part explosion loop.
-            isFailureInProgress = true;
-            ticksBetweenPartFailures = (int)(GameTicksPerSecond * DelayBetweenPartFailures);
-            ticksSinceFailureStart = 0;
-
-#if DEBUG
-            Debug.LogError(PluginName + " :: Launch Failure!!");
-            Debug.LogWarning(PluginName + " :: GameTicksPerSecond used is " + GameTicksPerSecond + ".");
-            Debug.LogWarning(PluginName + " :: FailureChancePerTick is " + FailureChancePerTick + ".");
-            Debug.LogWarning(PluginName + " :: ticksBetweenPartFailures is " + ticksBetweenPartFailures + ".");
-#endif
-        }
-
-        /// <summary>
-        /// Determines the next doomed part to explode based on game ticks since start.
-        /// </summary>
-        private void ExplodeNextDoomedPart()
-        {
-            // Only activate on certain ticks.
-            if (ticksSinceFailureStart % ticksBetweenPartFailures == 0)
-            {
-                // Determine the part to explode.
-                int currentPartIndex = ticksSinceFailureStart / ticksBetweenPartFailures;
-                Part part = doomedParts[currentPartIndex];
-
-#if DEBUG
-                Debug.LogError(PluginName + " :: " + part.partInfo.title + " (" + part.flightID + ") was doomed to explode.");
-                Debug.LogError(PluginName + " :: Current Tick is " + ticksSinceFailureStart + ".");
-#endif
-
-                // The 0 index is the starting part.
-                if (currentPartIndex == 0)
-                {
-                    FlightLogger.eventLog.Add("[" + FormatMissionTime(FlightGlobals.ActiveVessel.missionTime) + "] Random failure and disassembly of " + part.partInfo.title + ".");
-                }
-                else
-                {
-                    FlightLogger.eventLog.Add("[" + FormatMissionTime(FlightGlobals.ActiveVessel.missionTime) + "] " + part.partInfo.title + " disassembly due to failure of " + doomedParts[0].partInfo.title + ".");
-                }
-
-                // The fun part...
-                part.explode();
-
-                // Auto Abort
-                if (DoAutoAbortActionGroup)
-                {
-                    if (doomedParts.Count == 0 || currentPartIndex == 1)
-                    {
-                        FlightGlobals.ActiveVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
-                    }
-                }
-                
-
-                // If this is the last part, we need to kill the script.
-                if (currentPartIndex >= doomedParts.Count - 1)
-                {
-                    // Destroy the script.
-                    DestroyFailureRun();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Propagates failure through surrounding parts.
-        /// </summary>
-        /// <param name="part">The parent part.</param>
-        /// <param name="failureChance">Chance of failure for the next part.</param>
-        private void FailurePropagate(Part part, double failureChance)
-        {
-            List<Part> potentialParts = new List<Part>();
-
-            // Calculate the next propagation's failure chance.
-            double nextFailureChance = (PropagationChanceDecreases) ? failureChance * FailurePropagateChance : failureChance;
-
-            // Parent
-            if (part.parent)
-            {
-                if (!doomedParts.Contains(part.parent))
-                {
-                    potentialParts.Add(part.parent);
-                }
-            }
-
-            // Children
-            foreach (Part childPart in part.children)
-            {
-                if (!doomedParts.Contains(childPart))
-                {
-                    potentialParts.Add(childPart);
-                }
-            }
-
-            // For each potential part, see if it fails and then propagate it.
-            foreach (Part potentialPart in potentialParts)
-            {
-                double thisFailureChance = (PartIsExplosiveFuelTank(potentialPart)) ? 1 : failureChance;
-                if (!doomedParts.Contains(potentialPart) && rand.NextDouble() < thisFailureChance)
-                {
-                    doomedParts.Add(potentialPart);
-                    FailurePropagate(potentialPart, nextFailureChance);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Determines if part is an active engine.
-        /// </summary>
-        /// <param name="part">The part to check.</param>
-        /// <returns>True if an active engine, false if not.</returns>
-        private static bool PartIsActiveEngine(Part part)
-        {
-            // Thanks to Ippo for the code inspiration here.
-            List<ModuleEngines> engineModules = part.Modules.OfType<ModuleEngines>().ToList();
-            List<ModuleEnginesFX> engineFXModules = part.Modules.OfType<ModuleEnginesFX>().ToList();
-
-            foreach (ModuleEngines engineModule in engineModules)
-            {
-                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
-                {
-                    return true;
-                }
-            }
-
-            foreach (ModuleEnginesFX engineModule in engineFXModules)
-            {
-                if (engineModule.enabled && engineModule.EngineIgnited && engineModule.currentThrottle > 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Determines if the part has enough explosive fuel to guarantee an explosion.
-        /// </summary>
-        /// <param name="part">The part to check.</param>
-        /// <returns>True if valid, false is not.</returns>
-        private static bool PartIsExplosiveFuelTank(Part part)
-        {
-            // There's gotta be a better way to do this.
-            foreach (PartResource resource in part.Resources)
-            {
-                if (resource.maxAmount > 0 && resource.amount / resource.maxAmount > ExplosiveTankThreshold)
-                {
-                    switch (resource.resourceName)
-                    {
-                        case "LiquidFuel":
-                        case "Oxidizer":
-                        case "MonoPropellant":
-                        case "SolidFuel":
-                            return true;
-                        default:
-                            break;
-                    }
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Formats the mission elapsed time for the Flight Event log.
-        /// </summary>
-        /// <param name="rawMissionTime">The mission time.</param>
-        /// <returns>String formatted mission elapse time.</returns>
-        private static string FormatMissionTime(double rawMissionTime)
-        {
-            int time = (int)rawMissionTime % 3600;
-            int seconds = time % 60;
-            int minutes = (time / 60) % 60;
-            int hours = (time / 3600);
-            return hours.ToString("D2") + ":" + minutes.ToString("D2") + ":" + seconds.ToString("D2");
         }
     }
 }
