@@ -20,6 +20,11 @@ namespace KerbalLaunchFailure
         public const string PluginAbbreviation = "KLF";
 
         /// <summary>
+        /// The plugin's PluginData directory.
+        /// </summary>
+        public const string LocalPluginDataPath = "GameData/KerbalLaunchFailure/Plugins/PluginData";
+
+        /// <summary>
         /// Is the failure script active?
         /// </summary>
         private bool isFailureScriptActive = false;
