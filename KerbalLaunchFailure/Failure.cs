@@ -8,48 +8,6 @@ namespace KerbalLaunchFailure
 {
     public class Failure
     {
-#if DEBUG
-        /// <summary>
-        /// Chance of launch failure: always.
-        /// </summary>
-        private const int ChanceOfRUD = 1;
-
-        /// <summary>
-        /// The maximum altitude as a percentage in which the failure can begin.
-        /// </summary>
-        private const float MaxFailureAltitudePercentage = 0.075F;
-#else
-        /// <summary>
-        /// Chance of launch failure: 1 in 'ChanceOfRUD'
-        /// </summary>
-        private const int ChanceOfRUD = 50;
-
-        /// <summary>
-        /// The maximum altitude as a percentage in which the failure can begin.
-        /// </summary>
-        private const float MaxFailureAltitudePercentage = 0.65F;
-#endif
-
-        /// <summary>
-        /// If set true, the failure rate will decrease with each propagation.
-        /// </summary>
-        private const bool PropagationChanceDecreases = false;
-
-        /// <summary>
-        /// Chance that the part explosion will propogate to attached part. Fuel tanks are handled differently.
-        /// </summary>
-        private const float FailurePropagateChance = 0.7F;
-
-        /// <summary>
-        /// The delay between part failures.
-        /// </summary>
-        private const float DelayBetweenPartFailures = 0.2F;
-
-        /// <summary>
-        /// If true, after the first part failure, the abort action group will automatically fire.
-        /// </summary>
-        private const bool DoAutoAbortActionGroup = true;
-
         /// <summary>
         /// The active flight vessel.
         /// </summary>
@@ -107,7 +65,7 @@ namespace KerbalLaunchFailure
             // This plugin is only targeted at atmospheric failures.
             if (currentCelestialBody.atmosphere)
             {
-                altitudeFailureOccurs = KLFUtils.RNG.Next(0, (int)(currentCelestialBody.atmosphereDepth * MaxFailureAltitudePercentage));
+                altitudeFailureOccurs = KLFUtils.RNG.Next(0, (int)(currentCelestialBody.atmosphereDepth * KLFSettings.Instance.MaxFailureAltitudePercentage));
 #if DEBUG
                 KLFUtils.LogDebugMessage("Failure will occur at an altitude of " + altitudeFailureOccurs);
 #endif
@@ -184,7 +142,7 @@ namespace KerbalLaunchFailure
             startingPartEngineModule = startingPart.Modules.OfType<ModuleEngines>().Single();
 
             // Setup tick information for the part explosion loop.
-            ticksBetweenPartExplosions = (int)(KLFUtils.GameTicksPerSecond * DelayBetweenPartFailures);
+            ticksBetweenPartExplosions = (int)(KLFUtils.GameTicksPerSecond * KLFSettings.Instance.DelayBetweenPartFailures);
             ticksSinceFailureStart = 0;
             thrustOverload = 0;
         }
@@ -210,7 +168,7 @@ namespace KerbalLaunchFailure
                 KLFUtils.LogFlightData(activeVessel, "Random failure of " + startingPart.partInfo.title + ".");
 
                 // If the auto abort sequence is on and this is the starting part, trigger the Abort action group.
-                if (DoAutoAbortActionGroup)
+                if (KLFSettings.Instance.AutoAbort)
                 {
                     activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
                 }
@@ -267,7 +225,7 @@ namespace KerbalLaunchFailure
             doomedParts.Add(startingPart);
 
             // Propagate to sourrounding parts.
-            PropagateFailure(startingPart, FailurePropagateChance);
+            PropagateFailure(startingPart, KLFSettings.Instance.FailurePropagateProbability);
 
             // Remove the starting part. This will be handled differently.
             doomedParts.RemoveAt(0);
@@ -287,7 +245,7 @@ namespace KerbalLaunchFailure
             List<Part> potentialParts = new List<Part>();
 
             // Calculate the next propagation's failure chance.
-            double nextFailureChance = (PropagationChanceDecreases) ? failureChance * FailurePropagateChance : failureChance;
+            double nextFailureChance = (KLFSettings.Instance.PropagationChanceDecreases) ? failureChance * KLFSettings.Instance.FailurePropagateProbability : failureChance;
 
             // Parent
             if (part.parent && !doomedParts.Contains(part.parent))
@@ -322,7 +280,7 @@ namespace KerbalLaunchFailure
         /// <returns>True if yes, false if no.</returns>
         public static bool Occurs()
         {
-            return KLFUtils.RNG.Next(0, ChanceOfRUD) == 0;
+            return KLFUtils.RNG.NextDouble() < KLFSettings.Instance.InitialFailureProbability;
         }
     }
 }
