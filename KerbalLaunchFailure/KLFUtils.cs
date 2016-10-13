@@ -29,6 +29,8 @@ namespace KerbalLaunchFailure
         /// <returns>True if an active engine, false if not.</returns>
         public static bool PartIsActiveEngine(Part part)
         {
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineFailures && !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineUnderthrust)
+                return false;
             // Thanks to Ippo for the code inspiration here.
             List<ModuleEngines> engineModules = part.Modules.OfType<ModuleEngines>().ToList();
             List<ModuleEnginesFX> engineFXModules = part.Modules.OfType<ModuleEnginesFX>().ToList();
@@ -51,6 +53,47 @@ namespace KerbalLaunchFailure
 
             return false;
         }
+
+        public static bool PartIsRadialDecoupler(Part part)
+        {
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowRadialDecouplerFailures)
+                return false;
+            List<ModuleAnchoredDecoupler> anchoredDecouplers = part.Modules.OfType<ModuleAnchoredDecoupler>().ToList();
+            if (anchoredDecouplers.Count > 0)
+            {
+                Log.Info("anchoredDecoupler: " + part.partInfo.title);
+                return true;
+            }
+            return false;
+        }
+
+        public static bool PartIsControlSurface(Part part)
+        {
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowControlSurfaceFailures)
+                return false;
+            List<ModuleControlSurface> controlSurface = part.Modules.OfType<ModuleControlSurface>().ToList();
+            if (controlSurface.Count > 0)
+            {
+                Log.Info("controlSurface: " + part.partInfo.title);
+                return true;
+            }
+            return false;
+        }
+
+        public static bool PartIsStrutOrFuelLine(CompoundPart part)
+        {
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowStrutFuelFailures)
+                return false;
+
+            if (part.name != "fuelLine" && part.name != "strutConnector")
+                return false;
+            if (part.attachState == CompoundPart.AttachState.Detached || part.attachState == CompoundPart.AttachState.Attaching)
+                return false;
+            if (part.target == part.parent)
+                return false;
+            return true;
+        }
+
 
         /// <summary>
         /// Determines if the part has enough explosive fuel to guarantee an explosion.
@@ -101,7 +144,7 @@ namespace KerbalLaunchFailure
 
         public static void LogDebugMessage(string message)
         {
-            Debug.LogError(KerbalLaunchFailureController.PluginName + " :: " + message);
+            Log.Error(KerbalLaunchFailureController.PluginName + " :: " + message);
         }
     }
 }

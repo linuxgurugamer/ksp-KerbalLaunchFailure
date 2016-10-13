@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace KerbalLaunchFailure
 {
@@ -11,12 +12,12 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// Config node name for settings.
         /// </summary>
-        private const string ConfigNodeName = "KERBALLAUNCHFAILURE_SETTINGS";
+        //private const string ConfigNodeName = "KERBALLAUNCHFAILURE_SETTINGS";
 
         /// <summary>
         /// Name of settings file.
         /// </summary>
-        private const string LocalSettingsFile = "KLF_Settings.cfg";
+       // private const string LocalSettingsFile = "KLF_Settings.cfg";
 
         // Default values for settings.
         private float initialFailureProbability = 0.02F;
@@ -25,6 +26,9 @@ namespace KerbalLaunchFailure
         private float failurePropagateProbability = 0.7F;
         private float delayBetweenPartFailures = 0.2F;
         private bool autoAbort = false;
+        private float autoAbortDelay = 5F;
+        private float preFailureWarningTime = 5F;
+        private string alarmSoundFile = "alarm2";
 
         /// <summary>
         /// Probability of initial failure.
@@ -75,10 +79,38 @@ namespace KerbalLaunchFailure
         }
 
         /// <summary>
+        /// How long to wait before triggering the autoAbort.
+        /// </summary>
+        public float AutoAbortDelay
+        {
+            get { return autoAbortDelay; }
+        }
+
+        /// <summary>
+        /// How much time to warn before a failure
+        /// </summary>
+        public float PreFailureWarningTime
+        {
+            get { return preFailureWarningTime; }
+        }
+
+        /// <summary>
+        /// Which alarm sound to use
+        /// </summary>
+        public string AlarmSoundFile
+        {
+            get { return alarmSoundFile; }
+        }
+
+
+
+
+        /// <summary>
         /// Singleton instance.
         /// </summary>
         private static KLFSettings instance;
 
+#if false
         /// <summary>
         /// The local path to the settings file.
         /// </summary>
@@ -94,7 +126,7 @@ namespace KerbalLaunchFailure
         {
             get { return Path.Combine(KSPUtil.ApplicationRootPath, LocalSettingsPath); }
         }
-
+#endif
         /// <summary>
         /// Settings instance.
         /// </summary>
@@ -115,26 +147,42 @@ namespace KerbalLaunchFailure
         /// </summary>
         private KLFSettings()
         {
+#if false
             if (!File.Exists(AbsoluteSettingsPath))
             {
                 SaveSettings();
             }
             else
             {
+#endif
                 if (!LoadSettings())
                 {
-                    SaveSettings();
+      //              SaveSettings();
                 }
-            }
+          //  }
         }
 
         /// <summary>
         /// Loads the settings from file.
         /// </summary>
         /// <returns></returns>
-        private bool LoadSettings()
+        public bool LoadSettings()
         {
+            
+            initialFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().initialFailureProbability;
+            maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().maxFailureAltitudePercentage;
+            propagationChanceDecreases = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().propagationChanceDecreases;
+            failurePropagateProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().failurePropagateProbability;
+            delayBetweenPartFailures = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().delayBetweenPartFailures;
+            autoAbort = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().autoAbort;
+            autoAbortDelay = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().autoAbortDelay;
+            preFailureWarningTime = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().preFailureWarningTime;
+            alarmSoundFile = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().alarmSoundFile;
+            return true;
+#if false
+
             bool validSettings = true;
+
             ConfigNode settings = ConfigNode.Load(AbsoluteSettingsPath);
             if (!settings.HasNode(ConfigNodeName)) { return false; }
             ConfigNode node = settings.GetNode(ConfigNodeName);
@@ -144,9 +192,17 @@ namespace KerbalLaunchFailure
             validSettings &= LoadSetting(node, "failurePropagateProbability", ref failurePropagateProbability);
             validSettings &= LoadSetting(node, "delayBetweenPartFailures", ref delayBetweenPartFailures);
             validSettings &= LoadSetting(node, "autoAbort", ref autoAbort);
+            validSettings &= LoadSetting(node, "autoAbortDelay", ref autoAbortDelay);
+            validSettings &= LoadSetting(node, "preFailureWarningTime", ref preFailureWarningTime);
+            validSettings &= LoadSetting(node, "alarmSoundFile", ref alarmSoundFile);
+            
+
+            Log.Info("LoadSettings, validSettings: " + validSettings.ToString());
             return validSettings;
+#endif
         }
 
+#if false
         /// <summary>
         /// Loads a float-type setting.
         /// </summary>
@@ -162,6 +218,7 @@ namespace KerbalLaunchFailure
                 value = result;
                 return true;
             }
+            Log.Info("LoadSetting: " + name + " failed");
             return false;
         }
 
@@ -184,9 +241,28 @@ namespace KerbalLaunchFailure
         }
 
         /// <summary>
-        /// Saves the settings to a file.
+        /// Loads a string setting.
         /// </summary>
-        private void SaveSettings()
+        /// <param name="node">The config node.</param>
+        /// <param name="name">The setting name.</param>
+        /// <param name="value">The setting value to be set.</param>
+        /// <returns></returns>
+        private bool LoadSetting(ConfigNode node, string name, ref string value)
+        {         
+            if (node.HasValue(name))
+            {
+                value = node.GetValue(name);
+                return true;
+            }
+            return false;
+        }
+#endif
+
+#if false
+    /// <summary>
+    /// Saves the settings to a file.
+    /// </summary>
+    private void SaveSettings()
         {
             // Create directory if needed.
             string settingsDirectory = Path.GetDirectoryName(AbsoluteSettingsPath);
@@ -202,8 +278,14 @@ namespace KerbalLaunchFailure
             node.AddValue("failurePropagateProbability", failurePropagateProbability);
             node.AddValue("delayBetweenPartFailures", delayBetweenPartFailures);
             node.AddValue("autoAbort", autoAbort);
+            node.AddValue("autoAbortDelay", autoAbortDelay);
+            node.AddValue("preFailureWarningTime", preFailureWarningTime);
+            node.AddValue("alarmSoundFile", alarmSoundFile);
+
+            
             settings.AddNode(node);
             settings.Save(AbsoluteSettingsPath);
         }
+#endif
     }
 }

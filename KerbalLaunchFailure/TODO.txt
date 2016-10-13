@@ -1,0 +1,6 @@
+﻿
+auto-shutdown attempts (random delay so they won't always be in time), but in career, the function is unlocked in the tech-tree (like throttle controlled avionics and mechjeb). Early career, all failures are explosive. As you progress, you get auto-abort, auto-shutdowns, alarms that sound when a problem _might_ happen.
+
+failures aren't always explosive, but maybe an engine or SRB fails to start, or there is an over/under thrust.
+
+ 

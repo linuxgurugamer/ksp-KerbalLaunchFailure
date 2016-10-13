@@ -22,7 +22,7 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// The plugin's PluginData directory.
         /// </summary>
-        public const string LocalPluginDataPath = "GameData/KerbalLaunchFailure/Plugins/PluginData";
+        public const string LocalPluginDataPath = "GameData/KerbalLaunchFailure/PluginData/";
 
         /// <summary>
         /// Is the failure script active?
@@ -39,24 +39,47 @@ namespace KerbalLaunchFailure
         /// </summary>
         private Failure failure;
 
+        public static bool soundPlaying = false;
+        public static FXGroup alarmSound = null;
+        public static string LocalAlarmSoundDir = "KerbalLaunchFailure/Sounds/";
+
         /// <summary>
         /// Called when script instance is being loaded.
         /// </summary>
         public void Awake()
         {
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().enabled)
+                return;
             // When a launch occurs, start failure script.
             GameEvents.onLaunch.Add(FailureStartHandler);
 
             // Need to keep track of when the game pauses or unpauses.
             GameEvents.onGamePause.Add(FailureGamePauseHandler);
-            GameEvents.onGameUnpause.Add(FaulureGameUnpauseHandler);
+            GameEvents.onGameUnpause.Add(FailureGameUnpauseHandler);
+            GameEvents.OnGameSettingsApplied.Add(ReloadSettings);
+        }
+
+        /// <summary>
+        /// Reload settings if necessary.
+        /// </summary>
+
+        void ReloadSettings()
+        {
+            if (KLFSettings.Instance != null)
+                KLFSettings.Instance.LoadSettings();
         }
 
         /// <summary>
         /// Called every frame.
         /// </summary>
-        public void Update()
+        public void FixedUpdate()
         {
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().enabled)
+                return;
+
+            // float throttle = FlightGlobals.ActiveVessel.ctrlState.mainThrottle;
+            // Log.Info("FixedUpdate throttle: " + throttle.ToString());
+
             // Only run if the failure script is active and the game is not paused.
             if (isFailureScriptActive && !isGamePaused)
             {
@@ -80,6 +103,12 @@ namespace KerbalLaunchFailure
         {
             if (Failure.Occurs())
             {
+                
+                SoundManager.LoadSound(LocalAlarmSoundDir + KLFSettings.Instance.AlarmSoundFile, "AlarmSound");
+                alarmSound = new FXGroup("AlarmSound");
+//                SoundManager.CreateFXSound(FlightGlobals.ActiveVessel.rootPart, alarmSound, "AlarmSound", true, 50f);
+                SoundManager.CreateFXSound(null, alarmSound, "AlarmSound", true, 50f);
+
                 ActivateFailureRun();
             }
             else
@@ -104,14 +133,20 @@ namespace KerbalLaunchFailure
         private void FailureGamePauseHandler()
         {
             isGamePaused = true;
+            if (alarmSound != null)
+            {
+                alarmSound.audio.Stop();
+            }
         }
 
         /// <summary>
         /// To be called when the game is unpaused.
         /// </summary>
-        private void FaulureGameUnpauseHandler()
+        private void FailureGameUnpauseHandler()
         {
             isGamePaused = false;
+            if (alarmSound != null && KerbalLaunchFailureController.soundPlaying)
+                alarmSound.audio.Play();
         }
 
         /// <summary>
@@ -119,9 +154,17 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void ActivateFailureRun()
         {
+            Log.Info("ActivateFailureRun");
             isFailureScriptActive = true;
             isGamePaused = false;
             failure = new Failure();
+            if (HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineUnderthrust)
+            {
+                failure.overThrust = KLFUtils.RNG.NextDouble() >= HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().engineUnderthrustProbability;
+            }
+            else
+                failure.overThrust =true;
+            failure.launchTime = Planetarium.GetUniversalTime();
             GameEvents.VesselSituation.onReachSpace.Add(FailureEndHandler);
         }
 
@@ -133,10 +176,14 @@ namespace KerbalLaunchFailure
             isFailureScriptActive = false;
             isGamePaused = false;
             failure = null;
+            if (alarmSound != null)
+                alarmSound.audio.Stop();
+            KerbalLaunchFailureController.soundPlaying = false;
             GameEvents.onLaunch.Remove(FailureStartHandler);
             GameEvents.onGamePause.Remove(FailureGamePauseHandler);
-            GameEvents.onGameUnpause.Remove(FaulureGameUnpauseHandler);
+            GameEvents.onGameUnpause.Remove(FailureGameUnpauseHandler);
             GameEvents.VesselSituation.onReachSpace.Remove(FailureEndHandler);
+            GameEvents.OnGameSettingsApplied.Remove(ReloadSettings);
         }
 
         /// <summary>

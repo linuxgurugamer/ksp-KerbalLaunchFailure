@@ -1,0 +1,17 @@
+﻿0.1.0
+		Initial re-release
+		fixed bug with exploding part not being on the vessel, for example, an SRB is decoupled before it explodes
+		Removed config file, now using 1.2 settings page
+		Added pre-failure warning
+		Added alarm sound
+		Added autoAbortDelay
+		Added screen messages about impending failures, etc.
+		Changed thrust overload from forward to up, now overload thrust is aligned with the normal thrust
+		Adding setting to disable mod in single game (possible by using the 1.2 settings)
+		Added logging class
+		Added an underthrust situation, with varying thrust levels, no overheat 
+		Added radial decouplers to possible failure parts
+		Added highlighting of failing part
+		Added minimum and maximum time before failure
+		Added control surfaces to possible failure parts
+		Added struts and fuel lines to possible failure parts
