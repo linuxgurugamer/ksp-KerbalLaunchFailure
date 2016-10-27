@@ -15,3 +15,7 @@
 		Added minimum and maximum time before failure
 		Added control surfaces to possible failure parts
 		Added struts and fuel lines to possible failure parts
+
+0.2.0
+		Fixed AutoAbort
+		Added AutoAbort Cancel & reset dialog

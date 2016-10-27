@@ -24,12 +24,14 @@ set HOMEDRIVE=%HOMEDIR:~0,2%
 type KerbalLaunchFailure.version
 set /p VERSION= "Enter version: "
 
-rd /s %HOMEDIR%\install\GameData\KerbalLaunchFailure
+rd /q /s %HOMEDIR%\install\GameData\KerbalLaunchFailure
 mkdir %HOMEDIR%\install\GameData\KerbalLaunchFailure
 mkdir %HOMEDIR%\install\GameData\KerbalLaunchFailure\Plugins
 mkdir %HOMEDIR%\install\GameData\KerbalLaunchFailure\PluginData
 
-copy bin\Release\KerbalLaunchFailure.dll ..\GameData\KerbalLaunchFailure\Plugins
+copy /y bin\Release\KerbalLaunchFailure.dll ..\GameData\KerbalLaunchFailure\Plugins
+copy /y KerbalLaunchFailure.version ..\GameData\KerbalLaunchFailure
+copy /y ..\..\MiniAVC.dll ..\GameData\KerbalLaunchFailure
 
 xcopy /y /s "..\GameData\KerbalLaunchFailure" %HOMEDIR%\install\GameData\KerbalLaunchFailure
 

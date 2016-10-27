@@ -8,10 +8,11 @@ namespace KerbalLaunchFailure
 {
     public class Failure
     {
+        public static Failure Instance;
         /// <summary>
         /// The active flight vessel.
         /// </summary>
-        private readonly Vessel activeVessel;
+        public readonly Vessel activeVessel;
 
         /// <summary>
         /// The active flight vessel's current parent celestial body.
@@ -66,7 +67,7 @@ namespace KerbalLaunchFailure
         // private Alarm alarm;
 
         public double launchTime = 0;
-        double failureTime = 0;
+        public double failureTime = 0;
         double preFailureTime = 0;
         double underthrustTime = 0;
         public bool overThrust = true;
@@ -76,6 +77,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         public Failure()
         {
+            Instance = this;
             // Gather info about current active vessel.
             activeVessel = FlightGlobals.ActiveVessel;
             currentCelestialBody = activeVessel.mainBody;
@@ -378,25 +380,33 @@ namespace KerbalLaunchFailure
                         KLFUtils.LogFlightData(activeVessel, "Underthrust of " + startingPart.partInfo.title + ".");
                 }
 
+#if false
 
                 // If the auto abort sequence is on and this is the starting part, trigger the Abort action group.
+                Debug.Log("AutoAbort: " + KLFSettings.Instance.AutoAbort.ToString());
+
                 if (KLFSettings.Instance.AutoAbort)
                 {
                     if (failureTime == 0)
+                    {
                         failureTime = Planetarium.GetUniversalTime();
+                    }
                     else
                     {
+                        Debug.Log("failureTime: " + failureTime.ToString() + "   AutoAbortDelay: " + KLFSettings.Instance.AutoAbortDelay.ToString() + "   Planetarium.GetUniversalTime: " + Planetarium.GetUniversalTime().ToString());
                         if (failureTime + KLFSettings.Instance.AutoAbortDelay > Planetarium.GetUniversalTime())
                         {
+                            Debug.Log("Triggering autoabort");
                             activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
                             // Following just to be sure the abort isn't triggered more than once
                             failureTime = Double.MaxValue;
                         }
                     }
                 }
-
+#endif
                 // Gather the doomed parts at the time of failure.
                 PrepareDoomedParts();
+                failureTime = Double.MaxValue;
 
                 // Nullify the starting part.
                 startingPart = null;
@@ -419,9 +429,30 @@ namespace KerbalLaunchFailure
                     }
                     lastWarningtime = Planetarium.GetUniversalTime() + 1;
                     lastTemp = startingPart.temperature;
+
                 }
+                // If the auto abort sequence is on and this is the starting part, trigger the Abort action group.
+                if (KLFSettings.Instance.AutoAbort)
+                {
+                    if (failureTime == 0)
+                    {
+                        failureTime = Planetarium.GetUniversalTime();
+                    }
+                    else
+                    {
+                        Debug.Log("failureTime: " + failureTime.ToString() + "   AutoAbortDelay: " + KLFSettings.Instance.AutoAbortDelay.ToString() + "   Planetarium.GetUniversalTime: " + Planetarium.GetUniversalTime().ToString());
+                        if (failureTime + KLFSettings.Instance.AutoAbortDelay < Planetarium.GetUniversalTime())
+                        {
+                            Debug.Log("Triggering autoabort");
+                            activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
+                            // Following just to be sure the abort isn't triggered more than once
+                            failureTime = Double.MaxValue;
+                        }
+                    }
+                }
+
             }
-                
+
             return true;
         }
 

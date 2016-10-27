@@ -43,6 +43,11 @@ namespace KerbalLaunchFailure
         public static FXGroup alarmSound = null;
         public static string LocalAlarmSoundDir = "KerbalLaunchFailure/Sounds/";
 
+        private int myWindowId;
+        private Rect windowRect;
+        const float WINDOW_WIDTH = 225;
+        const float WINDOW_HEIGHT = 200;
+
         /// <summary>
         /// Called when script instance is being loaded.
         /// </summary>
@@ -57,8 +62,87 @@ namespace KerbalLaunchFailure
             GameEvents.onGamePause.Add(FailureGamePauseHandler);
             GameEvents.onGameUnpause.Add(FailureGameUnpauseHandler);
             GameEvents.OnGameSettingsApplied.Add(ReloadSettings);
+
+            myWindowId = GetInstanceID();
+            windowRect = new Rect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            windowRect.center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
         }
 
+        void OnGUI()
+        {
+            Log.Info("OnGUI");
+            if (Failure.Instance == null || FlightDriver.Pause)
+                return;
+            Log.Info("failuretime: " + Failure.Instance.failureTime.ToString());
+            if (Failure.Instance.failureTime == 0 || Failure.Instance.failureTime == Double.MaxValue)
+                return;
+
+            GUI.skin = HighLogic.Skin;
+            windowRect = GUILayout.Window(myWindowId, windowRect, Window, "AutoAbort Cancel/Reset");
+        }
+
+        public void Window(int windowID)
+        {
+            GUI.skin = HighLogic.Skin;
+            var oldColor = GUI.backgroundColor;
+            var bstyle = new GUIStyle(GUI.skin.button);
+            bstyle.normal.textColor = Color.yellow;
+            //bstyle.normal.background = new Texture2D(2,2);
+           
+
+            GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUILayout.Label("AutoAbort in: " + ((Failure.Instance.failureTime + KLFSettings.Instance.AutoAbortDelay) - Planetarium.GetUniversalTime()).ToString("n2") + " seconds");
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+
+            GUILayout.FlexibleSpace();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUI.backgroundColor = Color.red;
+            if (GUILayout.Button("Cancel AutoAbort", bstyle, GUILayout.Width(170.0f), GUILayout.Height(40.0f)))
+            {
+                Failure.Instance.failureTime = Double.MaxValue;
+            }
+            GUILayout.FlexibleSpace();
+            GUI.backgroundColor = oldColor;
+            GUILayout.EndHorizontal();
+
+            GUILayout.FlexibleSpace();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            GUI.backgroundColor = Color.yellow;
+            if (GUILayout.Button("Reset AutoAbort Timer", bstyle, GUILayout.Width(170.0f), GUILayout.Height(35.0f)))
+            {
+                Failure.Instance.failureTime = Planetarium.GetUniversalTime();
+            }
+            GUILayout.FlexibleSpace();
+            GUI.backgroundColor = oldColor;
+            GUILayout.EndHorizontal();
+
+            GUILayout.FlexibleSpace();
+
+            GUILayout.BeginHorizontal();
+            GUILayout.FlexibleSpace();
+            // GUI.backgroundColor = Color.blue;
+            //bstyle.normal.textColor = Color.red;
+            if (GUILayout.Button("Abort Immediately", bstyle, GUILayout.Width(170.0f), GUILayout.Height(35.0f)))
+            {
+                Failure.Instance.activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
+            }
+            GUILayout.FlexibleSpace();
+            GUI.backgroundColor = oldColor;
+            GUILayout.EndHorizontal();
+
+            GUILayout.FlexibleSpace();
+
+            GUILayout.EndVertical();
+            GUI.DragWindow();
+        }
+        
         /// <summary>
         /// Reload settings if necessary.
         /// </summary>
@@ -93,6 +177,7 @@ namespace KerbalLaunchFailure
         public void OnDestroy()
         {
             DestroyFailureRun();
+            Failure.Instance = null;
         }
 
         /// <summary>
