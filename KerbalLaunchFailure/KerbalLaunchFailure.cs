@@ -70,10 +70,10 @@ namespace KerbalLaunchFailure
 
         void OnGUI()
         {
-            Log.Info("OnGUI");
+            //Log.Info("OnGUI");
             if (Failure.Instance == null || FlightDriver.Pause)
                 return;
-            Log.Info("failuretime: " + Failure.Instance.failureTime.ToString());
+            
             if (Failure.Instance.failureTime == 0 || Failure.Instance.failureTime == Double.MaxValue)
                 return;
 
@@ -131,6 +131,7 @@ namespace KerbalLaunchFailure
             //bstyle.normal.textColor = Color.red;
             if (GUILayout.Button("Abort Immediately", bstyle, GUILayout.Width(170.0f), GUILayout.Height(35.0f)))
             {
+                Failure.Instance.AddAndReportScience();
                 Failure.Instance.activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
             }
             GUILayout.FlexibleSpace();

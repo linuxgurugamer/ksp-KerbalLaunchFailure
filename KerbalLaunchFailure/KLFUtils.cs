@@ -27,11 +27,19 @@ namespace KerbalLaunchFailure
         /// </summary>
         /// <param name="part">The part to check.</param>
         /// <returns>True if an active engine, false if not.</returns>
-        public static bool PartIsActiveEngine(Part part)
+        public static bool PartIsActiveEngine(Part part, bool techRequired = true)
         {
             if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineFailures && !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineUnderthrust)
                 return false;
+            if (!techRequired)
+            {
+                ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
+                if (techNode != null && techNode.state == RDTech.State.Available)
+                    return false;
+
+            }
             // Thanks to Ippo for the code inspiration here.
+
             List<ModuleEngines> engineModules = part.Modules.OfType<ModuleEngines>().ToList();
             List<ModuleEnginesFX> engineFXModules = part.Modules.OfType<ModuleEnginesFX>().ToList();
 
@@ -54,11 +62,24 @@ namespace KerbalLaunchFailure
             return false;
         }
 
-        public static bool PartIsRadialDecoupler(Part part)
+        public static bool PartIsRadialDecoupler(Part part, bool techRequired = true)
         {
+
             if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowRadialDecouplerFailures)
                 return false;
+
+            if (!techRequired)
+            {
+
+                ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
+
+                if (techNode != null && techNode.state == RDTech.State.Available)
+                 return false;
+                
+            }
+
             List<ModuleAnchoredDecoupler> anchoredDecouplers = part.Modules.OfType<ModuleAnchoredDecoupler>().ToList();
+
             if (anchoredDecouplers.Count > 0)
             {
                 Log.Info("anchoredDecoupler: " + part.partInfo.title);
@@ -67,10 +88,17 @@ namespace KerbalLaunchFailure
             return false;
         }
 
-        public static bool PartIsControlSurface(Part part)
+        public static bool PartIsControlSurface(Part part, bool techRequired = true)
         {
             if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowControlSurfaceFailures)
                 return false;
+            if (!techRequired)
+            {
+                ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
+                if (techNode != null && techNode.state == RDTech.State.Available)
+                    return false;
+            }
+
             List<ModuleControlSurface> controlSurface = part.Modules.OfType<ModuleControlSurface>().ToList();
             if (controlSurface.Count > 0)
             {
@@ -80,10 +108,17 @@ namespace KerbalLaunchFailure
             return false;
         }
 
-        public static bool PartIsStrutOrFuelLine(CompoundPart part)
+        public static bool PartIsStrutOrFuelLine(CompoundPart part, bool techRequired = true)
         {
             if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowStrutFuelFailures)
                 return false;
+            if (!techRequired)
+            {
+                ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
+                if (techNode != null && techNode.state == RDTech.State.Available)
+                    return false;
+            }
+
 
             if (part.name != "fuelLine" && part.name != "strutConnector")
                 return false;
@@ -94,14 +129,31 @@ namespace KerbalLaunchFailure
             return true;
         }
 
+        public static bool ExperimentalPartsPresentAndActive()
+        {
+            List<Part> activeEngineParts = FlightGlobals.ActiveVessel.GetActiveParts().Where(o => KLFUtils.PartIsActiveEngine(o, false)).ToList();
+            List<Part> radialDecouplers = FlightGlobals.ActiveVessel.Parts.Where(o => KLFUtils.PartIsRadialDecoupler(o, false)).ToList();
+            List<Part> controlSurfaces = FlightGlobals.ActiveVessel.Parts.Where(o => KLFUtils.PartIsControlSurface(o, false)).ToList();
+            List<CompoundPart> strutsAndFuelLines = FlightGlobals.ActiveVessel.Parts.OfType<CompoundPart>().Where(o => KLFUtils.PartIsStrutOrFuelLine(o, false)).ToList();
+
+            int i = activeEngineParts.Count + radialDecouplers.Count + controlSurfaces.Count + strutsAndFuelLines.Count;
+
+            return i > 0;
+        }
 
         /// <summary>
         /// Determines if the part has enough explosive fuel to guarantee an explosion.
         /// </summary>
         /// <param name="part">The part to check.</param>
         /// <returns>True if valid, false is not.</returns>
-        public static bool PartIsExplosiveFuelTank(Part part)
+        public static bool PartIsExplosiveFuelTank(Part part, bool techRequired = true)
         {
+            if (!techRequired)
+            {
+                ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
+                if (techNode != null && techNode.state == RDTech.State.Available)
+                    return false;
+            }
             // There's gotta be a better way to do this.
             foreach (PartResource resource in part.Resources)
             {

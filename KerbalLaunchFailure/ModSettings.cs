@@ -32,12 +32,15 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomFloatParameterUI("Initial failure probability", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true)]
         public float initialFailureProbability = 0.02F;
 
-        [GameParameters.CustomParameterUI("Highlight failing part")]
-        public bool highlightFailingPart = true;
+        [GameParameters.CustomFloatParameterUI("Exp. Part failure probability", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true)]
+        public float expPartFailureProbability = 0.15F;
 
         [GameParameters.CustomFloatParameterUI("Max altitude of failure", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true,
             toolTip = "This is a percentage of the atmosphere depth (ie:  Kerbol's atmosphere is 70km deep)")]
         public float maxFailureAltitudePercentage = 0.65F;
+
+        [GameParameters.CustomParameterUI("Highlight failing part")]
+        public bool highlightFailingPart = true;
 
         [GameParameters.CustomParameterUI("Failure rate decreases with each propagation", toolTip = "If enabled, then the chance of successive failures decreases after each failure")]
         public bool propagationChanceDecreases = false;
@@ -64,6 +67,7 @@ namespace KerbalLaunchFailure
             {
                 case GameParameters.Preset.Easy:
                     initialFailureProbability = 0.02F;
+                    expPartFailureProbability = 0.8f;
                     maxFailureAltitudePercentage = 0.65F;
                     propagationChanceDecreases = true;
                     failurePropagateProbability = 0.5F;
@@ -75,6 +79,7 @@ namespace KerbalLaunchFailure
 
                 case GameParameters.Preset.Normal:
                     initialFailureProbability = 0.02F;
+                    expPartFailureProbability = 0.1f;
                     maxFailureAltitudePercentage = 0.65F;
                     propagationChanceDecreases = false;
                     failurePropagateProbability = 0.6F;
@@ -87,6 +92,7 @@ namespace KerbalLaunchFailure
 
                 case GameParameters.Preset.Moderate:
                     initialFailureProbability = 0.02F;
+                    expPartFailureProbability = 0.15f;
                     maxFailureAltitudePercentage = 0.65F;
                     propagationChanceDecreases = false;
                     failurePropagateProbability = 0.7F;
@@ -99,6 +105,7 @@ namespace KerbalLaunchFailure
 
                 case GameParameters.Preset.Hard:
                     initialFailureProbability = 0.02F;
+                    expPartFailureProbability = 0.2f;
                     maxFailureAltitudePercentage = 0.65F;
                     propagationChanceDecreases = false;
                     failurePropagateProbability = 0.8F;
@@ -116,6 +123,11 @@ namespace KerbalLaunchFailure
 
             if (member.Name == "enabled") //This Field must always be enabled.
                 return true;
+            if (member.Name == "expPartFailureProbability")
+            {
+                if (initialFailureProbability > expPartFailureProbability)
+                    expPartFailureProbability = initialFailureProbability;
+            }
 #if false
             if (enabled == false) //Otherwise it depends on the value of MyBool if it's false return false
             {
@@ -134,6 +146,7 @@ namespace KerbalLaunchFailure
             if (MyBool == false)  //Otherwise it depends on the value of MyBool if it's false return false
                 return false;
 #endif
+            
             return true; //otherwise return true
         }
 
@@ -171,7 +184,6 @@ namespace KerbalLaunchFailure
         public override string Section { get { return "KerbalLaunchFailure"; } }
         public override int SectionOrder { get { return 2; } }
         public override bool HasPresets { get { return true; } }
-
 
 
         [GameParameters.CustomParameterUI("AutoAbort enabled")]
@@ -320,4 +332,66 @@ namespace KerbalLaunchFailure
         }
     }
 
-}
+    public class KLFCustomParams3 : GameParameters.CustomParameterNode
+    {
+        public override string Title { get { return ""; } }
+        public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
+        public override string Section { get { return "KerbalLaunchFailure"; } }
+        public override int SectionOrder { get { return 3; } }
+        public override bool HasPresets { get { return true; } }
+
+
+        [GameParameters.CustomParameterUI("Failure generates some science", toolTip = "If a failure occurs, you learn something from it")]
+        public bool scienceAtFailure = true;
+
+        [GameParameters.CustomFloatParameterUI("Science Adjustment", toolTip = "The larger the number, the more science is generated from a failure", minValue = 10.0f, maxValue = 100.0f, stepCount = 91, displayFormat = "F1")]
+        public float scienceAdjustment = 100.0F;
+
+        [GameParameters.CustomFloatParameterUI("Random factor applied to warning time", toolTip = "larger value make warning time more random", minValue = 0.0f, maxValue = 10.0f, stepCount = 101, displayFormat = "F1")]
+        public float timeRandomness = 0.1F;
+
+
+        public override void SetDifficultyPreset(GameParameters.Preset preset)
+        {
+            Log.Info("Setting difficulty preset");
+            switch (preset)
+            {
+                case GameParameters.Preset.Easy:
+                    timeRandomness = 0.1F;
+                    scienceAtFailure = true;
+                    scienceAdjustment = 100.0f;
+                    break;
+
+                case GameParameters.Preset.Normal:
+                    timeRandomness = 1.0F;
+                    scienceAtFailure = true;
+                    scienceAdjustment = 50.0f;
+                    break;
+
+                case GameParameters.Preset.Moderate:
+                    timeRandomness = 3.0F;
+                    scienceAtFailure = true;
+                    scienceAdjustment = 20.0f;
+                    break;
+
+                case GameParameters.Preset.Hard:
+                    timeRandomness = 5.0F;
+                    scienceAtFailure = true;
+                    scienceAdjustment = 10.0f;
+                    break;
+            }
+        }
+        public override bool Enabled(MemberInfo member, GameParameters parameters)
+        {
+            if (member.Name == "scienceAtFailure")
+                return scienceAtFailure;
+            return true;
+        }
+        public override bool Interactible(MemberInfo member, GameParameters parameters)
+        {
+
+            return true; //otherwise return true
+        }
+    }
+
+    }

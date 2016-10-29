@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using KSP.UI.Screens;
 
 namespace KerbalLaunchFailure
 {
@@ -13,6 +14,10 @@ namespace KerbalLaunchFailure
         /// The active flight vessel.
         /// </summary>
         public readonly Vessel activeVessel;
+
+        public float activeVesselCost = 0f;
+        public float scienceAfterFailure = 0f;
+        public float preFailureWarningTime = 0f;
 
         /// <summary>
         /// The active flight vessel's current parent celestial body.
@@ -34,7 +39,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         private ModuleEngines startingPartEngineModule;
 
-        enum FailureType { none, engine, radialDecoupler, controlSurface, strutOrFuelLine};
+        enum FailureType { none, engine, radialDecoupler, controlSurface, strutOrFuelLine };
         private FailureType failureType = FailureType.none;
         //private bool startingRadialDecouplerModule = false;
         private int decouplerForceCnt = 0;
@@ -72,6 +77,65 @@ namespace KerbalLaunchFailure
         double underthrustTime = 0;
         public bool overThrust = true;
 
+
+        static bool experimentalPartFailure = false;
+        static bool partFailure = false;
+
+        float CalcVesselCosts(Vessel v)
+        {
+            ShipConstruct sc = new ShipConstruct();
+
+            foreach (Part p in v.parts)
+            {
+                sc.parts.Add(p);
+            }
+            float drycost, fuelcost;
+            float shipCost = sc.GetShipCosts(out drycost, out fuelcost);
+            return shipCost;
+        }
+
+        float CalcScienceReward(float vesselCost, Vessel v, Part startingPart)
+        {
+            Log.Info("CalcScienceReward");
+
+            if (KLFSettings.Instance.ScienceAtFailure &&
+                HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX)
+            {
+                if (startingPart != null)
+                {
+
+                    if (ResearchAndDevelopment.Instance != null)
+                    {
+                        ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(startingPart.partInfo.TechRequired);
+                        if (techNode != null)
+                        {
+                            // Need to reverse the science adjustment here
+                            float scienceAdjustmentAdj = 110 - KLFSettings.Instance.ScienceAdjustment;
+
+                            return (float)(techNode.scienceCost * Math.Log(vesselCost, scienceAdjustmentAdj));
+                        }
+                        else
+                            Log.Info("techNode is null");
+                    }
+                    else
+                        Log.Info("ResearchAndDevelopment.Instance is null");
+                }
+                else
+                {
+                    float r = (float)(Math.Log(vesselCost, 10) * UnityEngine.Random.Range(0.75f, 1.25f));
+                    if (r < 1)
+                        r *= 10f;
+                    if (r < 1)
+                        r = 1.5f;
+                    return r;
+                }
+
+            }
+
+            return 0f;
+
+        }
+
         /// <summary>
         /// Constructor for Failure object.
         /// </summary>
@@ -80,6 +144,9 @@ namespace KerbalLaunchFailure
             Instance = this;
             // Gather info about current active vessel.
             activeVessel = FlightGlobals.ActiveVessel;
+            activeVesselCost = CalcVesselCosts(activeVessel);
+            //scienceAfterFailure = CalcScienceReward(activeVesselCost, activeVessel);
+
             currentCelestialBody = activeVessel.mainBody;
 
             // This plugin is only targeted at atmospheric failures.
@@ -95,7 +162,7 @@ namespace KerbalLaunchFailure
                 altitudeFailureOccurs = 0;
             }
             //alarm = new KerbalLaunchFailure.Alarm();
-            
+
         }
 
         public void HighlightSinglePart(Color highlightC, Color edgeHighlightColor, Part p)
@@ -170,7 +237,10 @@ namespace KerbalLaunchFailure
                         if (!CauseStartingPartFailure())
                         {
                             if (KerbalLaunchFailureController.alarmSound != null)
+                            {
                                 KerbalLaunchFailureController.alarmSound.audio.Stop();
+                                AddAndReportScience();
+                            }
                             return false;
                         }
                     }
@@ -188,29 +258,42 @@ namespace KerbalLaunchFailure
                         if (KerbalLaunchFailureController.alarmSound != null)
                             KerbalLaunchFailureController.alarmSound.audio.Stop();
                         KerbalLaunchFailureController.soundPlaying = false;
+                        AddAndReportScience();
+
                         return false;
                     }
                 }
                 // Increase the ticks.
                 ticksSinceFailureStart++;
             }
-
-
             // Tell caller to continue run.
             return true;
         }
 
+        public void AddAndReportScience()
+        {
+            if (scienceAfterFailure > 0)
+            {
+                KLFUtils.LogFlightData(activeVessel, scienceAfterFailure.ToString() + "  Science gained due to lessons learned.");
+                ResearchAndDevelopment.Instance.AddScience(scienceAfterFailure, TransactionReasons.VesselLoss);
+            }
+
+        }
         /// <summary>
         /// Determines the starting part in the failure.
         /// </summary>
         private void PrepareStartingPart()
         {
+
+
             Log.Info("PrepareStartingPart");
             // Find engines
-            List<Part> activeEngineParts = activeVessel.GetActiveParts().Where(o => KLFUtils.PartIsActiveEngine(o)).ToList();
-            List<Part> radialDecouplers = activeVessel.Parts.Where(o =>  KLFUtils.PartIsRadialDecoupler(o)).ToList();
-            List<Part> controlSurfaces = activeVessel.Parts.Where(o => KLFUtils.PartIsControlSurface(o)).ToList();
-            List<CompoundPart> strutsAndFuelLines = activeVessel.Parts.OfType<CompoundPart>().Where(o => KLFUtils.PartIsStrutOrFuelLine(o)).ToList();
+            bool b = !experimentalPartFailure;
+
+            List<Part> activeEngineParts = activeVessel.GetActiveParts().Where(o => KLFUtils.PartIsActiveEngine(o, b)).ToList();
+            List<Part> radialDecouplers = activeVessel.Parts.Where(o => KLFUtils.PartIsRadialDecoupler(o, b)).ToList();
+            List<Part> controlSurfaces = activeVessel.Parts.Where(o => KLFUtils.PartIsControlSurface(o, b)).ToList();
+            List<CompoundPart> strutsAndFuelLines = activeVessel.Parts.OfType<CompoundPart>().Where(o => KLFUtils.PartIsStrutOrFuelLine(o, b)).ToList();
 
             int cnt = activeEngineParts.Count + radialDecouplers.Count + controlSurfaces.Count + strutsAndFuelLines.Count;
             // If there are no active engines or radial decouplers, skip this attempt.
@@ -249,7 +332,7 @@ namespace KerbalLaunchFailure
                 decouplerForceCnt = 0;
             }
             offset += controlSurfaces.Count;
-            if (startingPartIndex >= offset  && startingPartIndex < offset + strutsAndFuelLines.Count)
+            if (startingPartIndex >= offset && startingPartIndex < offset + strutsAndFuelLines.Count)
             {
                 startingPart = strutsAndFuelLines[startingPartIndex - offset];
 
@@ -284,6 +367,13 @@ namespace KerbalLaunchFailure
             thrustOverload = 0;
             underThrustStart = 100f;
             underThrustEnd = 100f;
+            scienceAfterFailure = CalcScienceReward(activeVesselCost, activeVessel, startingPart);
+            preFailureWarningTime = KLFSettings.Instance.PreFailureWarningTime;
+            if (KLFSettings.Instance.TimeRandomness > 0)
+            {
+                float f = UnityEngine.Random.Range(0, KLFSettings.Instance.TimeRandomness) - KLFSettings.Instance.TimeRandomness / 2f;
+                preFailureWarningTime += f;
+            }
         }
 
         double lastWarningtime = 0;
@@ -307,7 +397,7 @@ namespace KerbalLaunchFailure
                 return false;
             }
 
-            if (preFailureTime + KLFSettings.Instance.PreFailureWarningTime > Planetarium.GetUniversalTime())
+            if (preFailureTime + preFailureWarningTime > Planetarium.GetUniversalTime())
             {
                 // This makes sure that one message a second is put to the screen
                 if (lastWarningtime < Planetarium.GetUniversalTime())
@@ -319,10 +409,10 @@ namespace KerbalLaunchFailure
                 return true;
             }
             // If a valid game tick.
-            if ( ticksSinceFailureStart % ticksBetweenPartFailures == 0 && (startingPartEngineModule != null &&startingPartEngineModule.finalThrust > 0))
+            if (ticksSinceFailureStart % ticksBetweenPartFailures == 0 && (startingPartEngineModule != null && startingPartEngineModule.finalThrust > 0))
             {
                 // Need to start overloading the thrust and increase the part's temperature.
-              
+
                 // Calculate actual throttle, the lower of either the throttle setting or the current thrust / max thrust
                 float throttle = startingPartEngineModule.finalThrust / startingPartEngineModule.maxThrust;
 
@@ -335,38 +425,39 @@ namespace KerbalLaunchFailure
                     startingPartEngineModule.part.Rigidbody.AddRelativeForce(Vector3.up * thrustOverload);
                     //                startingPart.temperature += startingPart.maxTemp / 20.0;
                     startingPart.temperature += startingPart.maxTemp / 20.0 * throttle;
-                } else
+                }
+                else
                 {
                     // Underthrust will change every 1/2 second
                     if (underthrustTime < Planetarium.GetUniversalTime())
                     {
                         underThrustStart = underThrustEnd;
                         underThrustEnd = (float)((0.9 - KLFUtils.RNG.NextDouble() / 2) * 100);
-                        
 
-                        
+
+
                         //if (startingPartEngineModule.thrustPercentage < 0)
                         //    startingPartEngineModule.thrustPercentage = KLFUtils.RNG.NextDouble() / 4;
 
-                       //          startingPartEngineModule.part.Rigidbody.AddRelativeForce(Vector3.up * thrustOverload);
-                       underthrustTime = Planetarium.GetUniversalTime() + 0.5;
-                       // startingPart.temperature += startingPart.maxTemp / 50.0 * throttle;
+                        //          startingPartEngineModule.part.Rigidbody.AddRelativeForce(Vector3.up * thrustOverload);
+                        underthrustTime = Planetarium.GetUniversalTime() + 0.5;
+                        // startingPart.temperature += startingPart.maxTemp / 50.0 * throttle;
                     }
-                    startingPartEngineModule.thrustPercentage = Mathf.Lerp(underThrustStart, underThrustEnd, 1 - (float)(Planetarium.GetUniversalTime() - underthrustTime)/0.5f) ;
+                    startingPartEngineModule.thrustPercentage = Mathf.Lerp(underThrustStart, underThrustEnd, 1 - (float)(Planetarium.GetUniversalTime() - underthrustTime) / 0.5f);
                 }
-                
-//                startingPart.temperature += startingPart.maxTemp / 20.0 * throttle;
+
+                //                startingPart.temperature += startingPart.maxTemp / 20.0 * throttle;
             }
-            if ( ticksSinceFailureStart % ticksBetweenPartFailures == 0 && failureType != FailureType.engine)
-            {              
+            if (ticksSinceFailureStart % ticksBetweenPartFailures == 0 && failureType != FailureType.engine)
+            {
                 ++decouplerForceCnt;
-                
+
                 Log.Info("decouplerForceCnt: " + decouplerForceCnt.ToString());
                 if (decouplerForceCnt > 20)
                     startingPart.decouple(startingPart.breakingForce + 1);
             }
 
-                // When the part explodes to overheating.
+            // When the part explodes to overheating.
             if (startingPart.temperature >= startingPart.maxTemp || decouplerForceCnt > 20)
             {
                 // Log flight data.
@@ -380,30 +471,6 @@ namespace KerbalLaunchFailure
                         KLFUtils.LogFlightData(activeVessel, "Underthrust of " + startingPart.partInfo.title + ".");
                 }
 
-#if false
-
-                // If the auto abort sequence is on and this is the starting part, trigger the Abort action group.
-                Debug.Log("AutoAbort: " + KLFSettings.Instance.AutoAbort.ToString());
-
-                if (KLFSettings.Instance.AutoAbort)
-                {
-                    if (failureTime == 0)
-                    {
-                        failureTime = Planetarium.GetUniversalTime();
-                    }
-                    else
-                    {
-                        Debug.Log("failureTime: " + failureTime.ToString() + "   AutoAbortDelay: " + KLFSettings.Instance.AutoAbortDelay.ToString() + "   Planetarium.GetUniversalTime: " + Planetarium.GetUniversalTime().ToString());
-                        if (failureTime + KLFSettings.Instance.AutoAbortDelay > Planetarium.GetUniversalTime())
-                        {
-                            Debug.Log("Triggering autoabort");
-                            activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
-                            // Following just to be sure the abort isn't triggered more than once
-                            failureTime = Double.MaxValue;
-                        }
-                    }
-                }
-#endif
                 // Gather the doomed parts at the time of failure.
                 PrepareDoomedParts();
                 failureTime = Double.MaxValue;
@@ -445,6 +512,7 @@ namespace KerbalLaunchFailure
                         {
                             Debug.Log("Triggering autoabort");
                             activeVessel.ActionGroups.SetGroup(KSPActionGroup.Abort, true);
+                            AddAndReportScience();
                             // Following just to be sure the abort isn't triggered more than once
                             failureTime = Double.MaxValue;
                         }
@@ -486,6 +554,7 @@ namespace KerbalLaunchFailure
 
             // The fun stuff...
             nextDoomedPart.explode();
+
         }
 
         /// <summary>
@@ -548,7 +617,7 @@ namespace KerbalLaunchFailure
                     thisFailureChance = (KLFUtils.PartIsExplosiveFuelTank(potentialPart)) ? 1 : failureChance;
                 if (!doomedParts.Contains(potentialPart) && KLFUtils.RNG.NextDouble() < thisFailureChance)
                 {
-                        doomedParts.Add(potentialPart);
+                    doomedParts.Add(potentialPart);
                     PropagateFailure(potentialPart, nextFailureChance);
                 }
             }
@@ -559,8 +628,20 @@ namespace KerbalLaunchFailure
         /// </summary>
         /// <returns>True if yes, false if no.</returns>
         public static bool Occurs()
-        {            
-            return KLFUtils.RNG.NextDouble() < KLFSettings.Instance.InitialFailureProbability;
+        {
+            double r = KLFUtils.RNG.NextDouble();
+ 
+            if (KLFUtils.ExperimentalPartsPresentAndActive())
+            {
+                Log.Info("Experimental Parts present");
+                experimentalPartFailure = r < KLFSettings.Instance.ExpPartFailureProbability;
+            }
+            partFailure = KLFUtils.RNG.NextDouble() < KLFSettings.Instance.InitialFailureProbability;
+
+            Log.Info("experimentalPartFailure: " + experimentalPartFailure.ToString() + "   partFailure: " + partFailure.ToString());
+
+            return experimentalPartFailure || partFailure;
+            
         }
     }
 }

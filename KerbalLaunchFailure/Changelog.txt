@@ -19,3 +19,9 @@
 0.2.0
 		Fixed AutoAbort
 		Added AutoAbort Cancel & reset dialog
+
+0.3.0
+		Added random time to pre-failure reporting time
+		Added Science gain after failure
+		Added Science gain adjustment
+		Added increased chance for experimental part to fail

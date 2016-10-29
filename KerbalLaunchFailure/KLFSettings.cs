@@ -21,6 +21,7 @@ namespace KerbalLaunchFailure
 
         // Default values for settings.
         private float initialFailureProbability = 0.02F;
+        private float expPartFailureProbability = 0.1f;
         private float maxFailureAltitudePercentage = 0.65F;
         private bool propagationChanceDecreases = false;
         private float failurePropagateProbability = 0.7F;
@@ -30,6 +31,34 @@ namespace KerbalLaunchFailure
         private float preFailureWarningTime = 5F;
         private string alarmSoundFile = "alarm2";
 
+        private float timeRandomness = 0.0f;
+        private bool scienceAtFailure = false;
+        private float scienceAdjustment = 10.0f;
+
+        /// <summary>
+        /// ScienceAdjustment adjusts amount of science awarded when a failure happens.  Larger = less science (uses logorithms)
+        /// </summary>
+        public float ScienceAdjustment
+        {
+            get { return scienceAdjustment; }
+        }
+
+        /// <summary>
+        /// TimeRandomness applied to time before failure, after initial notification.  Larger is more random.
+        /// </summary>
+        public float TimeRandomness
+        {
+            get { return timeRandomness; }
+        }
+
+        /// <summary>
+        /// If set true, you will get some (random) science after a failure
+        /// </summary>
+        public bool ScienceAtFailure
+        {
+            get { return scienceAtFailure; }
+        }
+
         /// <summary>
         /// Probability of initial failure.
         /// </summary>
@@ -37,6 +66,14 @@ namespace KerbalLaunchFailure
         {
             get { return initialFailureProbability; }
         }
+        /// <summary>
+        /// Probability of experimental part failure.
+        /// </summary>
+        public float ExpPartFailureProbability
+        {
+            get { return expPartFailureProbability; }
+        }
+        
 
         /// <summary>
         /// The maximum altitude as a percentage in which the failure can begin.
@@ -170,6 +207,7 @@ namespace KerbalLaunchFailure
         {
             
             initialFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().initialFailureProbability;
+            expPartFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().expPartFailureProbability;
             maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().maxFailureAltitudePercentage;
             propagationChanceDecreases = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().propagationChanceDecreases;
             failurePropagateProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().failurePropagateProbability;
@@ -178,114 +216,12 @@ namespace KerbalLaunchFailure
             autoAbortDelay = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().autoAbortDelay;
             preFailureWarningTime = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().preFailureWarningTime;
             alarmSoundFile = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().alarmSoundFile;
+
+
+            timeRandomness = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams3>().timeRandomness;
+            scienceAtFailure = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams3>().scienceAtFailure;
+            scienceAdjustment = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams3>().scienceAdjustment;
             return true;
-#if false
-
-            bool validSettings = true;
-
-            ConfigNode settings = ConfigNode.Load(AbsoluteSettingsPath);
-            if (!settings.HasNode(ConfigNodeName)) { return false; }
-            ConfigNode node = settings.GetNode(ConfigNodeName);
-            validSettings &= LoadSetting(node, "initialFailureProbability", ref initialFailureProbability);
-            validSettings &= LoadSetting(node, "maxFailureAltitudePercentage", ref maxFailureAltitudePercentage);
-            validSettings &= LoadSetting(node, "propagationChanceDecreases", ref propagationChanceDecreases);
-            validSettings &= LoadSetting(node, "failurePropagateProbability", ref failurePropagateProbability);
-            validSettings &= LoadSetting(node, "delayBetweenPartFailures", ref delayBetweenPartFailures);
-            validSettings &= LoadSetting(node, "autoAbort", ref autoAbort);
-            validSettings &= LoadSetting(node, "autoAbortDelay", ref autoAbortDelay);
-            validSettings &= LoadSetting(node, "preFailureWarningTime", ref preFailureWarningTime);
-            validSettings &= LoadSetting(node, "alarmSoundFile", ref alarmSoundFile);
-            
-
-            Log.Info("LoadSettings, validSettings: " + validSettings.ToString());
-            return validSettings;
-#endif
         }
-
-#if false
-        /// <summary>
-        /// Loads a float-type setting.
-        /// </summary>
-        /// <param name="node">The config node.</param>
-        /// <param name="name">The setting name.</param>
-        /// <param name="value">The setting value to be set.</param>
-        /// <returns></returns>
-        private bool LoadSetting(ConfigNode node, string name, ref float value)
-        {
-            float result = 0F;
-            if (node.HasValue(name) && float.TryParse(node.GetValue(name), out result))
-            {
-                value = result;
-                return true;
-            }
-            Log.Info("LoadSetting: " + name + " failed");
-            return false;
-        }
-
-        /// <summary>
-        /// Loads a boolean-type setting.
-        /// </summary>
-        /// <param name="node">The config node.</param>
-        /// <param name="name">The setting name.</param>
-        /// <param name="value">The setting value to be set.</param>
-        /// <returns></returns>
-        private bool LoadSetting(ConfigNode node, string name, ref bool value)
-        {
-            bool result = false;
-            if (node.HasValue(name) && bool.TryParse(node.GetValue(name), out result))
-            {
-                value = result;
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Loads a string setting.
-        /// </summary>
-        /// <param name="node">The config node.</param>
-        /// <param name="name">The setting name.</param>
-        /// <param name="value">The setting value to be set.</param>
-        /// <returns></returns>
-        private bool LoadSetting(ConfigNode node, string name, ref string value)
-        {         
-            if (node.HasValue(name))
-            {
-                value = node.GetValue(name);
-                return true;
-            }
-            return false;
-        }
-#endif
-
-#if false
-    /// <summary>
-    /// Saves the settings to a file.
-    /// </summary>
-    private void SaveSettings()
-        {
-            // Create directory if needed.
-            string settingsDirectory = Path.GetDirectoryName(AbsoluteSettingsPath);
-            if (!Directory.Exists(settingsDirectory))
-            {
-                Directory.CreateDirectory(settingsDirectory);
-            }
-            ConfigNode settings = new ConfigNode();
-            ConfigNode node = new ConfigNode(ConfigNodeName);
-            node.AddValue("initialFailureProbability", initialFailureProbability);
-            node.AddValue("maxFailureAltitudePercentage", maxFailureAltitudePercentage);
-            node.AddValue("propagationChanceDecreases", propagationChanceDecreases);
-            node.AddValue("failurePropagateProbability", failurePropagateProbability);
-            node.AddValue("delayBetweenPartFailures", delayBetweenPartFailures);
-            node.AddValue("autoAbort", autoAbort);
-            node.AddValue("autoAbortDelay", autoAbortDelay);
-            node.AddValue("preFailureWarningTime", preFailureWarningTime);
-            node.AddValue("alarmSoundFile", alarmSoundFile);
-
-            
-            settings.AddNode(node);
-            settings.Save(AbsoluteSettingsPath);
-        }
-#endif
     }
 }
