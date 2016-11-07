@@ -328,7 +328,11 @@ namespace KerbalLaunchFailure
                 failureType = FailureType.engine;
 
                 // Get the engine module for the part.
-                startingPartEngineModule = startingPart.Modules.OfType<ModuleEngines>().Single();
+				foreach (ModuleEngines engineModule in startingPart.Modules.OfType<ModuleEngines>().ToList()) {
+					if (engineModule.enabled && engineModule.currentThrottle > 0) {
+						startingPartEngineModule = engineModule;
+					}
+				}
             }
             offset += activeEngineParts.Count;
             if (startingPartIndex >= offset && startingPartIndex < offset + radialDecouplers.Count)
