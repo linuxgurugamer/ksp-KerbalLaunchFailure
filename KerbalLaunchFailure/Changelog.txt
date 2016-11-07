@@ -29,6 +29,9 @@
 0.4.0
 		Fixed problem with sandbox mode not failing
 		Added toolbar button to disable alarm.  Button also flashes while emergency is in progress
-0.4.*
+
+0.4.1
 		Fixed harmless nullref wnen exiting from flight to main menu.  Only happened when mod is disabled
 		Fixed harmless nullref wnen launching.  Only happened when mod is disabled
+		Fixes DivisionByZero when engine has multiple ModuleEngines per part,
+			thanks @stasikos aka ThirdOfSeven
