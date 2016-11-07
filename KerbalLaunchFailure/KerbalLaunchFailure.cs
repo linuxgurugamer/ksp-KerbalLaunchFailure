@@ -81,6 +81,8 @@ namespace KerbalLaunchFailure
         double lastUpdate = 0f;
         void updateToolbarButton()
         {
+            if (launcherButton == null || failure == null)
+                return;
             if (failure.failurecomplete)
             {
                 launcherButton.SetTexture(GetImage("KerbalLaunchFailure/Textures/failed", 38, 38));
@@ -107,6 +109,7 @@ namespace KerbalLaunchFailure
             {
                 GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIApplicationLauncherReady);
                 ApplicationLauncher.Instance.RemoveModApplication(launcherButton);
+                launcherButton = null;
             }
         }
 
