@@ -25,3 +25,7 @@
 		Added Science gain after failure
 		Added Science gain adjustment
 		Added increased chance for experimental part to fail
+
+0.4.0
+		Fixed problem with sandbox mode not failing
+		Added toolbar button to disable alarm.  Button also flashes while emergency is in progress

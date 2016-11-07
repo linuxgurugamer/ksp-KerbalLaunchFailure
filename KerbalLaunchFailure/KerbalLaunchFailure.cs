@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using KSP.UI.Screens;
 
 namespace KerbalLaunchFailure
 {
@@ -48,6 +49,68 @@ namespace KerbalLaunchFailure
         const float WINDOW_WIDTH = 225;
         const float WINDOW_HEIGHT = 200;
 
+        internal ApplicationLauncherButton launcherButton = null;
+        bool abortButtonYellow = false;
+        public Texture2D GetImage(String path, int width, int height)
+        {
+            Texture2D img = new Texture2D(width, height, TextureFormat.ARGB32, false);
+            img = GameDatabase.Instance.GetTexture(path, false);
+            return img;
+        }
+        private void OnGUIApplicationLauncherReady()
+        {
+            if (launcherButton == null)
+            {
+                launcherButton = ApplicationLauncher.Instance.AddModApplication(
+                    abortWindow,
+                    abortWindow,
+                    null, null, null, null,
+                    ApplicationLauncher.AppScenes.FLIGHT,
+                    GetImage("KerbalLaunchFailure/Textures/allSystemsGo", 38, 38));
+            }
+        }
+
+        void abortWindow()
+        {
+            Log.Info("abortWindow  isFailureScriptActive: " + isFailureScriptActive.ToString() + "   KerbalLaunchFailureController.soundPlaying: " + KerbalLaunchFailureController.soundPlaying.ToString());
+            if (!isFailureScriptActive || !KerbalLaunchFailureController.soundPlaying)
+                return;
+            failure.disableAlarm();
+        }
+
+        double lastUpdate = 0f;
+        void updateToolbarButton()
+        {
+            if (failure.failurecomplete)
+            {
+                launcherButton.SetTexture(GetImage("KerbalLaunchFailure/Textures/failed", 38, 38));
+                failure.failurecomplete = false;
+                return;
+            }
+            if (!isFailureScriptActive || (!failure.alarmDisabled && !KerbalLaunchFailureController.soundPlaying))
+                return;
+            if (Planetarium.GetUniversalTime() - lastUpdate > 1)
+            {
+                lastUpdate = Planetarium.GetUniversalTime();
+
+                abortButtonYellow = !abortButtonYellow;
+                if (abortButtonYellow)
+                    launcherButton.SetTexture(GetImage("KerbalLaunchFailure/Textures/warning", 38, 38));
+                else
+                    launcherButton.SetTexture(GetImage("KerbalLaunchFailure/Textures/warning2", 38, 38));
+            }
+        }
+
+        public void removeLauncherButtons()
+        {
+            if (launcherButton != null)
+            {
+                GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIApplicationLauncherReady);
+                ApplicationLauncher.Instance.RemoveModApplication(launcherButton);
+            }
+        }
+
+
         /// <summary>
         /// Called when script instance is being loaded.
         /// </summary>
@@ -66,6 +129,11 @@ namespace KerbalLaunchFailure
             myWindowId = GetInstanceID();
             windowRect = new Rect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             windowRect.center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+
+            if (launcherButton == null)
+            {
+                OnGUIApplicationLauncherReady();
+            }
         }
 
         void OnGUI()
@@ -166,8 +234,9 @@ namespace KerbalLaunchFailure
             // Log.Info("FixedUpdate throttle: " + throttle.ToString());
 
             // Only run if the failure script is active and the game is not paused.
-            if (isFailureScriptActive && !isGamePaused)
+            if ((failure != null && failure.failurecomplete) || (isFailureScriptActive && !isGamePaused))
             {
+                updateToolbarButton();
                 RunFailure();
             }
         }
@@ -177,6 +246,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         public void OnDestroy()
         {
+            removeLauncherButtons();
             DestroyFailureRun();
             Failure.Instance = null;
         }
@@ -259,6 +329,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void DestroyFailureRun()
         {
+            updateToolbarButton();
             isFailureScriptActive = false;
             isGamePaused = false;
             failure = null;
@@ -270,6 +341,7 @@ namespace KerbalLaunchFailure
             GameEvents.onGameUnpause.Remove(FailureGameUnpauseHandler);
             GameEvents.VesselSituation.onReachSpace.Remove(FailureEndHandler);
             GameEvents.OnGameSettingsApplied.Remove(ReloadSettings);
+
         }
 
         /// <summary>

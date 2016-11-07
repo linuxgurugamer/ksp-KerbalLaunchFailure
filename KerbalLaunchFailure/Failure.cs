@@ -80,6 +80,17 @@ namespace KerbalLaunchFailure
 
         static bool experimentalPartFailure = false;
         static bool partFailure = false;
+        public bool alarmDisabled = false;
+        public bool failurecomplete = false;
+
+        public void disableAlarm()
+        {
+            Log.Info("disableAlarm");
+            if (KerbalLaunchFailureController.alarmSound != null)            
+                KerbalLaunchFailureController.alarmSound.audio.Stop();
+            KerbalLaunchFailureController.soundPlaying = false;
+            alarmDisabled = true;
+        }
 
         float CalcVesselCosts(Vessel v)
         {
@@ -227,9 +238,12 @@ namespace KerbalLaunchFailure
                             Log.Info("Imminent Failure");
                             ScreenMessages.PostScreenMessage("Imminent Failure on " + startingPart.partInfo.title, 1.0f, ScreenMessageStyle.UPPER_CENTER);
                             HighlightFailingPart(startingPart);
-                            KerbalLaunchFailureController.soundPlaying = true;
-                            KerbalLaunchFailureController.alarmSound.audio.Play();
-
+                            if (!alarmDisabled)
+                            {
+                                Log.Info("Starting alarm");
+                                KerbalLaunchFailureController.soundPlaying = true;
+                                KerbalLaunchFailureController.alarmSound.audio.Play();
+                            }
                         }
                     }
                     else
@@ -240,6 +254,7 @@ namespace KerbalLaunchFailure
                             {
                                 KerbalLaunchFailureController.alarmSound.audio.Stop();
                                 AddAndReportScience();
+                                failurecomplete = true;
                             }
                             return false;
                         }
@@ -259,7 +274,7 @@ namespace KerbalLaunchFailure
                             KerbalLaunchFailureController.alarmSound.audio.Stop();
                         KerbalLaunchFailureController.soundPlaying = false;
                         AddAndReportScience();
-
+                        failurecomplete = true;
                         return false;
                     }
                 }
@@ -452,7 +467,7 @@ namespace KerbalLaunchFailure
             {
                 ++decouplerForceCnt;
 
-                Log.Info("decouplerForceCnt: " + decouplerForceCnt.ToString());
+                //Log.Info("decouplerForceCnt: " + decouplerForceCnt.ToString());
                 if (decouplerForceCnt > 20)
                     startingPart.decouple(startingPart.breakingForce + 1);
             }

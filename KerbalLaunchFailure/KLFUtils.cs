@@ -29,9 +29,9 @@ namespace KerbalLaunchFailure
         /// <returns>True if an active engine, false if not.</returns>
         public static bool PartIsActiveEngine(Part part, bool techRequired = true)
         {
-            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineFailures && !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineUnderthrust)
+            if (part == null || !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineFailures && !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineUnderthrust)
                 return false;
-            if (!techRequired)
+            if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX && !techRequired)
             {
                 ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
                 if (techNode != null && techNode.state == RDTech.State.Available)
@@ -64,18 +64,19 @@ namespace KerbalLaunchFailure
 
         public static bool PartIsRadialDecoupler(Part part, bool techRequired = true)
         {
-
-            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowRadialDecouplerFailures)
+            if (part == null || !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowRadialDecouplerFailures)
                 return false;
 
-            if (!techRequired)
+
+            if (HighLogic.CurrentGame.Mode !=  Game.Modes.SANDBOX && !techRequired)
             {
+                if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX && part.partInfo.TechRequired != null)
+                {
+                    ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
 
-                ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
-
-                if (techNode != null && techNode.state == RDTech.State.Available)
-                 return false;
-                
+                    if (techNode != null && techNode.state == RDTech.State.Available)
+                        return false;
+                }
             }
 
             List<ModuleAnchoredDecoupler> anchoredDecouplers = part.Modules.OfType<ModuleAnchoredDecoupler>().ToList();
@@ -90,9 +91,9 @@ namespace KerbalLaunchFailure
 
         public static bool PartIsControlSurface(Part part, bool techRequired = true)
         {
-            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowControlSurfaceFailures)
+            if (part == null || !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowControlSurfaceFailures)
                 return false;
-            if (!techRequired)
+            if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX && !techRequired)
             {
                 ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
                 if (techNode != null && techNode.state == RDTech.State.Available)
@@ -110,15 +111,14 @@ namespace KerbalLaunchFailure
 
         public static bool PartIsStrutOrFuelLine(CompoundPart part, bool techRequired = true)
         {
-            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowStrutFuelFailures)
+            if (part == null || !HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowStrutFuelFailures)
                 return false;
-            if (!techRequired)
+            if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX && !techRequired)
             {
                 ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
                 if (techNode != null && techNode.state == RDTech.State.Available)
                     return false;
             }
-
 
             if (part.name != "fuelLine" && part.name != "strutConnector")
                 return false;
@@ -131,6 +131,8 @@ namespace KerbalLaunchFailure
 
         public static bool ExperimentalPartsPresentAndActive()
         {
+            if (HighLogic.CurrentGame.Mode == Game.Modes.CAREER)
+                return false;
             List<Part> activeEngineParts = FlightGlobals.ActiveVessel.GetActiveParts().Where(o => KLFUtils.PartIsActiveEngine(o, false)).ToList();
             List<Part> radialDecouplers = FlightGlobals.ActiveVessel.Parts.Where(o => KLFUtils.PartIsRadialDecoupler(o, false)).ToList();
             List<Part> controlSurfaces = FlightGlobals.ActiveVessel.Parts.Where(o => KLFUtils.PartIsControlSurface(o, false)).ToList();
@@ -148,7 +150,9 @@ namespace KerbalLaunchFailure
         /// <returns>True if valid, false is not.</returns>
         public static bool PartIsExplosiveFuelTank(Part part, bool techRequired = true)
         {
-            if (!techRequired)
+            if (part == null)
+                return false;
+            if (HighLogic.CurrentGame.Mode != Game.Modes.SANDBOX && !techRequired)
             {
                 ProtoTechNode techNode = ResearchAndDevelopment.Instance.GetTechState(part.partInfo.TechRequired);
                 if (techNode != null && techNode.state == RDTech.State.Available)
