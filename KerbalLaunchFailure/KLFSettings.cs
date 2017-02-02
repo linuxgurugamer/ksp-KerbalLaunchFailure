@@ -206,7 +206,7 @@ namespace KerbalLaunchFailure
         public bool LoadSettings()
         {
             
-            initialFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().initialFailureProbability;
+            initialFailureProbability = (float)HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().initialFailureProbability;
             expPartFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().expPartFailureProbability;
             maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().maxFailureAltitudePercentage;
             propagationChanceDecreases = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().propagationChanceDecreases;

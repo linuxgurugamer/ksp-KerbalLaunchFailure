@@ -35,3 +35,6 @@
 		Fixed harmless nullref wnen launching.  Only happened when mod is disabled
 		Fixes DivisionByZero when engine has multiple ModuleEngines per part,
 			thanks @stasikos aka ThirdOfSeven
+
+0.4.2
+		KSP bug on the setting page (in KSP 1.2.2) meant that the percentages couldn't be entered. Recoded to work around bug

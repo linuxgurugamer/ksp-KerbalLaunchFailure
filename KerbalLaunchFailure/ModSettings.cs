@@ -29,15 +29,45 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomParameterUI("Mod Enabled?")]
         public bool enabled = true;
 
-        [GameParameters.CustomFloatParameterUI("Initial failure probability", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true)]
-        public float initialFailureProbability = 0.02F;
+        // The following crazy code is due to a bug introduced in 1.2.2
+        // See this link for details:  http://forum.kerbalspaceprogram.com/index.php?/topic/7542-the-official-unoffical-quothelp-a-fellow-plugin-developerquot-thread/&page=100#comment-2887044
 
-        [GameParameters.CustomFloatParameterUI("Exp. Part failure probability", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true)]
-        public float expPartFailureProbability = 0.15F;
+        //        [GameParameters.CustomFloatParameterUI("Initial failure probability", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true)]
+        //        public float initialFailureProbability = 0.02F;
 
-        [GameParameters.CustomFloatParameterUI("Max altitude of failure", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true,
+        public float initialFailureProb = 0.02F;
+        [GameParameters.CustomFloatParameterUI("Initial failure probability (%)", displayFormat = "N0", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
+        public float initialFailureProbability
+        {
+            get { return initialFailureProb * 100; }
+            set { initialFailureProb = value / 100.0f; }
+        }
+
+
+        //        [GameParameters.CustomFloatParameterUI("Exp. Part failure probability", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true)]
+        //        public float expPartFailureProbability = 0.15F;
+
+        public float expPartFailureProb = 0.15F;
+        [GameParameters.CustomFloatParameterUI("Exp. Part failure probability (%)", displayFormat = "N0", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
+        public float expPartFailureProbability
+        {
+            get { return expPartFailureProb * 100; }
+            set { expPartFailureProb = value / 100.0f; }
+        }
+
+
+        //        [GameParameters.CustomFloatParameterUI("Max altitude of failure", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true,
+        //            toolTip = "This is a percentage of the atmosphere depth (ie:  Kerbol's atmosphere is 70km deep)")]
+        //          public float maxFailureAltitudePercentage = 0.65F;
+
+        public float maxFailureAltitudePerc = 0.65F;
+        [GameParameters.CustomFloatParameterUI("Max altitude of failure (%)", displayFormat = "N0", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false,
             toolTip = "This is a percentage of the atmosphere depth (ie:  Kerbol's atmosphere is 70km deep)")]
-        public float maxFailureAltitudePercentage = 0.65F;
+        public float maxFailureAltitudePercentage
+        {
+            get { return maxFailureAltitudePerc * 100; }
+            set { maxFailureAltitudePerc = value / 100.0f; }
+        }
 
         [GameParameters.CustomParameterUI("Highlight failing part")]
         public bool highlightFailingPart = true;
@@ -45,13 +75,35 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomParameterUI("Failure rate decreases with each propagation", toolTip = "If enabled, then the chance of successive failures decreases after each failure")]
         public bool propagationChanceDecreases = false;
 
-        [GameParameters.CustomFloatParameterUI("Chance of failure propogation", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true,
+
+        //        [GameParameters.CustomFloatParameterUI("Chance of failure propogation", minValue = 0.0f, maxValue = 1.0f, stepCount = 101, asPercentage = true,
+        //            toolTip = "This is the chance of the failure propogating to another part.")]
+        //        public float failurePropagateProbability = 0.6F;
+
+        public float failurePropagateProb = 0.6F;
+        [GameParameters.CustomFloatParameterUI("Chance of failure propogation (%)", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false,
             toolTip = "This is the chance of the failure propogating to another part.")]
-        public float failurePropagateProbability = 0.6F;
+        public float failurePropagateProbability
+        {
+            get { return failurePropagateProb * 100; }
+            set { failurePropagateProb = value / 100.0f; }
+        }
+
+
+
+        //        [GameParameters.CustomFloatParameterUI("Delay between part failures, in seconds", minValue = 0.0f, maxValue = 0.5f, stepCount = 101, displayFormat = "F1",
+        //            toolTip = "This is the time between each additional failure of a part.  So, if .2, then every .2 seconds the part will fail some more")]
+        //        public float delayBetweenPartFailures = 0.8F;
+
+        public float delayBetweenPartFail = 0.8F;
 
         [GameParameters.CustomFloatParameterUI("Delay between part failures, in seconds", minValue = 0.0f, maxValue = 0.5f, stepCount = 101, displayFormat = "F1",
             toolTip = "This is the time between each additional failure of a part.  So, if .2, then every .2 seconds the part will fail some more")]
-        public float delayBetweenPartFailures = 0.8F;
+        public float delayBetweenPartFailures
+        {
+            get { return delayBetweenPartFail * 100; }
+            set { delayBetweenPartFail = value / 100.0f; }
+        }
 
         [GameParameters.CustomFloatParameterUI("Min time before failure (seconds)", minValue = 5.0f, maxValue = 100.0f, stepCount = 100, displayFormat = "F1", logBase = 2)]
         public float minTimeBeforeFailure = 5.0F;
@@ -204,8 +256,17 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomParameterUI("Allow engine underthrust")]
         public bool allowEngineUnderthrust = true;
 
-        [GameParameters.CustomFloatParameterUI("Chance of engine failure being underthrust", minValue = 0.01f, maxValue = 1.0f, stepCount = 100, asPercentage = true)]
-        public float engineUnderthrustProbability = 0.3F;
+        //        [GameParameters.CustomFloatParameterUI("Chance of engine failure being underthrust", minValue = 0.01f, maxValue = 1.0f, stepCount = 100, asPercentage = true)]
+        //        public float engineUnderthrustProbability = 0.3F;
+   
+        public float engineUnderthrustProb = 0.3F;
+        [GameParameters.CustomFloatParameterUI("Chance of engine failure being underthrust (%)", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
+        public float engineUnderthrustProbability
+        {
+            get { return engineUnderthrustProb * 100; }
+            set { engineUnderthrustProb = value / 100.0f; }
+        }
+
 
 
         [GameParameters.CustomParameterUI("Allow radial decoupler failures")]
