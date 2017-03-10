@@ -166,6 +166,8 @@ namespace KerbalLaunchFailure
                 altitudeFailureOccurs = KLFUtils.RNG.Next(0, (int)(currentCelestialBody.atmosphereDepth * KLFSettings.Instance.MaxFailureAltitudePercentage));
 #if DEBUG
                 KLFUtils.LogDebugMessage("Failure will occur at an altitude of " + altitudeFailureOccurs);
+                Log.Info("currentCelestialBody.atmosphereDepth: " + currentCelestialBody.atmosphereDepth.ToString());
+                Log.Info("KLFSettings.Instance.MaxFailureAltitudePercentage: " + KLFSettings.Instance.MaxFailureAltitudePercentage.ToString());
 #endif
             }
             else
@@ -382,6 +384,7 @@ namespace KerbalLaunchFailure
 #endif
             // Setup tick information for the part explosion loop.
             ticksBetweenPartFailures = (int)(KLFUtils.GameTicksPerSecond * KLFSettings.Instance.DelayBetweenPartFailures);
+            if (ticksBetweenPartFailures == 0) ticksBetweenPartFailures = (int)(KLFUtils.GameTicksPerSecond / 20f + 1f);
             ticksSinceFailureStart = 0;
             thrustOverload = 0;
             underThrustStart = 100f;
@@ -403,7 +406,6 @@ namespace KerbalLaunchFailure
         /// </summary>
         private bool CauseStartingPartFailure()
         {
-
             if (activeVessel.Parts.Where(o => o == startingPart).Count() == 0)
             {
                 ScreenMessages.PostScreenMessage("Failing " + startingPart.partInfo.title + " no longer attached to vessel", 5.0f, ScreenMessageStyle.UPPER_CENTER);
@@ -427,6 +429,7 @@ namespace KerbalLaunchFailure
                 }
                 return true;
             }
+
             // If a valid game tick.
             if (ticksSinceFailureStart % ticksBetweenPartFailures == 0 && (startingPartEngineModule != null && startingPartEngineModule.finalThrust > 0))
             {
@@ -434,8 +437,7 @@ namespace KerbalLaunchFailure
 
                 // Calculate actual throttle, the lower of either the throttle setting or the current thrust / max thrust
                 float throttle = startingPartEngineModule.finalThrust / startingPartEngineModule.maxThrust;
-
-                Log.Info("throttle: " + throttle.ToString());
+                
 
                 if (overThrust)
                 {
@@ -467,6 +469,7 @@ namespace KerbalLaunchFailure
 
                 //                startingPart.temperature += startingPart.maxTemp / 20.0 * throttle;
             }
+
             if (ticksSinceFailureStart % ticksBetweenPartFailures == 0 && failureType != FailureType.engine)
             {
                 ++decouplerForceCnt;

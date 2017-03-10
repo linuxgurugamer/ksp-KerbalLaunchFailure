@@ -97,7 +97,7 @@ namespace KerbalLaunchFailure
 
         public float delayBetweenPartFail = 0.8F;
 
-        [GameParameters.CustomFloatParameterUI("Delay between part failures, in seconds", minValue = 0.0f, maxValue = 0.5f, stepCount = 101, displayFormat = "F1",
+        [GameParameters.CustomFloatParameterUI("Delay between part failures, in seconds", minValue = 0.2f, maxValue = 0.8f, stepCount = 101, displayFormat = "F1",
             toolTip = "This is the time between each additional failure of a part.  So, if .2, then every .2 seconds the part will fail some more")]
         public float delayBetweenPartFailures
         {
@@ -444,7 +444,7 @@ namespace KerbalLaunchFailure
         }
         public override bool Enabled(MemberInfo member, GameParameters parameters)
         {
-            if (member.Name == "scienceAtFailure")
+            if (member.Name != "scienceAtFailure")
                 return scienceAtFailure;
             return true;
         }

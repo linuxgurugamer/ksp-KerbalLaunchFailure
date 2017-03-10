@@ -38,3 +38,7 @@
 
 0.4.2
 		KSP bug on the setting page (in KSP 1.2.2) meant that the percentages couldn't be entered. Recoded to work around bug
+
+0.4.3
+		Fixed bug on settings sceen, which was returning wrong value for enabled when ScienceOnFailure was true
+		Fixed bug on settings screen, where the time between failures could be 0, causing a divide by zero error

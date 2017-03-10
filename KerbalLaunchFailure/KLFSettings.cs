@@ -208,7 +208,7 @@ namespace KerbalLaunchFailure
             
             initialFailureProbability = (float)HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().initialFailureProbability;
             expPartFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().expPartFailureProbability;
-            maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().maxFailureAltitudePercentage;
+            maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().maxFailureAltitudePerc;
             propagationChanceDecreases = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().propagationChanceDecreases;
             failurePropagateProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().failurePropagateProbability;
             delayBetweenPartFailures = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().delayBetweenPartFailures;

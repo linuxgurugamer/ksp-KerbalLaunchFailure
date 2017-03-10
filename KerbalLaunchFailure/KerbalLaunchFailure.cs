@@ -107,7 +107,7 @@ namespace KerbalLaunchFailure
         {
             if (launcherButton != null)
             {
-                GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIApplicationLauncherReady);
+               // GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIApplicationLauncherReady);
                 ApplicationLauncher.Instance.RemoveModApplication(launcherButton);
                 launcherButton = null;
             }
