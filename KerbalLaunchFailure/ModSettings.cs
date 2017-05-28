@@ -23,6 +23,7 @@ namespace KerbalLaunchFailure
         public override string Title { get { return "";  } }
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
         public override string Section { get { return "KerbalLaunchFailure"; } }
+        public override string DisplaySection { get { return "KerbalLaunchFailure"; } }
         public override int SectionOrder { get { return 1; } }
         public override bool HasPresets { get { return true; } }
 
@@ -234,6 +235,7 @@ namespace KerbalLaunchFailure
         public override string Title { get { return ""; } }
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
         public override string Section { get { return "KerbalLaunchFailure"; } }
+        public override string DisplaySection { get { return "KerbalLaunchFailure"; } }
         public override int SectionOrder { get { return 2; } }
         public override bool HasPresets { get { return true; } }
 
@@ -398,6 +400,7 @@ namespace KerbalLaunchFailure
         public override string Title { get { return ""; } }
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
         public override string Section { get { return "KerbalLaunchFailure"; } }
+        public override string DisplaySection { get { return "KerbalLaunchFailure"; } }
         public override int SectionOrder { get { return 3; } }
         public override bool HasPresets { get { return true; } }
 

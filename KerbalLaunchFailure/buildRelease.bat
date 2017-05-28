@@ -1,28 +1,9 @@
-﻿@echo off
-set DEFHOMEDRIVE=d:
-set DEFHOMEDIR=%DEFHOMEDRIVE%%HOMEPATH%
-set HOMEDIR=
-set HOMEDRIVE=%CD:~0,2%
+﻿
+@echo off
+
 
 set RELEASEDIR=d:\Users\jbb\release
 set ZIP="c:\Program Files\7-zip\7z.exe"
-echo Default homedir: %DEFHOMEDIR%
-
-rem set /p HOMEDIR= "Enter Home directory, or <CR> for default: "
-
-if "%HOMEDIR%" == "" (
-set HOMEDIR=%DEFHOMEDIR%
-)
-echo %HOMEDIR%
-
-SET _test=%HOMEDIR:~1,1%
-if "%_test%" == ":" (
-set HOMEDRIVE=%HOMEDIR:~0,2%
-)
-
-
-
-
 
 
 set VERSIONFILE=KerbalLaunchFailure.version
@@ -42,29 +23,15 @@ del tmpfile
 set VERSION=%major%.%minor%.%patch%
 if "%build%" NEQ "0"  set VERSION=%VERSION%.%build%
 
-type KerbalLaunchFailure.version
-
 echo Version:  %VERSION%
-
-rem set /p newVERSION= "Enter version: "
-rem if "%newVERSION" NEQ "" set VERSION=%newVERSION%
-
-
-rd /q /s %HOMEDIR%\install\GameData\KerbalLaunchFailure
-mkdir %HOMEDIR%\install\GameData\KerbalLaunchFailure
-mkdir %HOMEDIR%\install\GameData\KerbalLaunchFailure\Plugins
-mkdir %HOMEDIR%\install\GameData\KerbalLaunchFailure\PluginData
 
 copy /y bin\Release\KerbalLaunchFailure.dll ..\GameData\KerbalLaunchFailure\Plugins
 copy /y KerbalLaunchFailure.version ..\GameData\KerbalLaunchFailure
 copy /y ..\..\MiniAVC.dll ..\GameData\KerbalLaunchFailure
 
-xcopy /y /s "..\GameData\KerbalLaunchFailure" %HOMEDIR%\install\GameData\KerbalLaunchFailure
-
-
-%HOMEDRIVE%
-cd %HOMEDIR%\install
-
+cd ..
 set FILE="%RELEASEDIR%\KerbalLaunchFailure-%VERSION%.zip"
 IF EXIST %FILE% del /F %FILE%
 %ZIP% a -tzip %FILE% Gamedata\KerbalLaunchFailure
+
+pause
