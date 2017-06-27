@@ -45,3 +45,6 @@
 
 0.4.4
 		Updated for 1.3
+
+0.4.5
+		Fix for settings not loading properly.  Due to a KSP bug in 1.2.2, some extra coding had to be done, and one piece was missed.  Thanks to Github user @McFistyBuns for the code
