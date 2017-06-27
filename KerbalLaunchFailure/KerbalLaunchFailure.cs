@@ -319,7 +319,7 @@ namespace KerbalLaunchFailure
             failure = new Failure();
             if (HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineUnderthrust)
             {
-                failure.overThrust = KLFUtils.RNG.NextDouble() >= HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().engineUnderthrustProbability;
+                failure.overThrust = KLFUtils.RNG.NextDouble() >= HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().engineUnderthrustProb;
             }
             else
                 failure.overThrust =true;
