@@ -55,3 +55,7 @@
 		shortened option descriptions to avoid wrapping
 		Moved all random calls to wrapper functions in KLFUtils 
 		Added debug mode to print data to log file
+
+0.4.7
+		Replaced Warning and Failed icons with new ones supplied by forum user @doggonemess
+		Old icons are in a zip file called oldIcons.zip
