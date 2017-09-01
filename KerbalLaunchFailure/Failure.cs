@@ -133,7 +133,13 @@ namespace KerbalLaunchFailure
                 }
                 else
                 {
-                    float r = (float)(Math.Log(vesselCost, 10) * UnityEngine.Random.Range(0.75f, 1.25f));
+                    //float r = (float)(Math.Log(vesselCost, 10) * UnityEngine.Random.Range(0.75f, 1.25f));
+                    var rnd = KLFUtils.RngRange(0.75f, 1.25f);
+                    float r = (float)Math.Log(vesselCost, 10) * rnd;
+                    if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+                    {
+                        Log.Warning("CalcScienceReward: Log(vesselCost): " + Math.Log(vesselCost, 10).ToString("N2") + ",  rnd: " + rnd.ToString("N2"));
+                    }
                     if (r < 1)
                         r *= 10f;
                     if (r < 1)
@@ -168,6 +174,13 @@ namespace KerbalLaunchFailure
                 KLFUtils.LogDebugMessage("Failure will occur at an altitude of " + altitudeFailureOccurs);
                 Log.Info("currentCelestialBody.atmosphereDepth: " + currentCelestialBody.atmosphereDepth.ToString());
                 Log.Info("KLFSettings.Instance.MaxFailureAltitudePercentage: " + KLFSettings.Instance.MaxFailureAltitudePercentage.ToString());
+#else
+                if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+                {
+                    Log.Warning("Failure will occur at an altitude of " + altitudeFailureOccurs);
+                    Log.Warning("currentCelestialBody.atmosphereDepth: " + currentCelestialBody.atmosphereDepth.ToString());
+                    Log.Warning("KLFSettings.Instance.MaxFailureAltitudePercentage: " + KLFSettings.Instance.MaxFailureAltitudePercentage.ToString());
+                }
 #endif
             }
             else
@@ -197,7 +210,7 @@ namespace KerbalLaunchFailure
 
         void HighlightFailingPart(Part part)
         {
-            if (HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().highlightFailingPart)
+            if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().highlightFailingPart)
                 HighlightSinglePart(XKCDColors.OffWhite, XKCDColors.Red, part);
         }
 
@@ -213,11 +226,11 @@ namespace KerbalLaunchFailure
             if (!currentCelestialBody.atmosphere) return false;
 
             // Wait until the minimum time before failure has passed
-            if (Planetarium.GetUniversalTime() - launchTime < HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().minTimeBeforeFailure)
+            if (Planetarium.GetUniversalTime() - launchTime < HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().minTimeBeforeFailure)
                 return true;
 
             // Wait until the vessel is past the altitude threshold AND the max time before failure hasn't passed
-            if (activeVessel.altitude < altitudeFailureOccurs && Planetarium.GetUniversalTime() - launchTime < HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().maxTimeBeforeFailure) return true;
+            if (activeVessel.altitude < altitudeFailureOccurs && Planetarium.GetUniversalTime() - launchTime < HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().maxTimeBeforeFailure) return true;
 
             // Prepare the doomed parts if not done so.
             if (startingPart == null && doomedParts == null)
@@ -321,6 +334,12 @@ namespace KerbalLaunchFailure
             Log.Info("activeEngineParts.Count: " + activeEngineParts.Count.ToString() + "    radialDecouplers.Count: " + radialDecouplers.Count.ToString() +
                 "   controlSurfaces.Count: " + controlSurfaces.Count.ToString() + "   strutsAndFuelLines.Count: " + strutsAndFuelLines.Count);
             Log.Info("startingPartIndex: " + startingPartIndex.ToString());
+            if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+            {
+                Log.Warning("activeEngineParts.Count: " + activeEngineParts.Count.ToString() + "    radialDecouplers.Count: " + radialDecouplers.Count.ToString() +
+               "   controlSurfaces.Count: " + controlSurfaces.Count.ToString() + "   strutsAndFuelLines.Count: " + strutsAndFuelLines.Count);
+                Log.Warning("startingPartIndex: " + startingPartIndex.ToString());
+            }
 
             // for debugging only: startingPartIndex = activeEngineParts.Count;
             int offset = 0;
@@ -393,7 +412,12 @@ namespace KerbalLaunchFailure
             preFailureWarningTime = KLFSettings.Instance.PreFailureWarningTime;
             if (KLFSettings.Instance.TimeRandomness > 0)
             {
-                float f = UnityEngine.Random.Range(0, KLFSettings.Instance.TimeRandomness) - KLFSettings.Instance.TimeRandomness / 2f;
+//                float f = UnityEngine.Random.Range(0, KLFSettings.Instance.TimeRandomness) - KLFSettings.Instance.TimeRandomness / 2f;
+                float f = KLFUtils.RngRange((float)0, KLFSettings.Instance.TimeRandomness) - KLFSettings.Instance.TimeRandomness / 2f;
+                if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+                {
+                    Log.Warning("preFailureWarningtime: " + preFailureWarningTime.ToString("N2") + ",  timeRandomness: " + f.ToString("N2"));
+                }
                 preFailureWarningTime += f;
             }
         }
@@ -453,12 +477,15 @@ namespace KerbalLaunchFailure
                     if (underthrustTime < Planetarium.GetUniversalTime())
                     {
                         underThrustStart = underThrustEnd;
-                        underThrustEnd = (float)((0.9 - KLFUtils.RNG.NextDouble() / 2) * 100);
-
+                        underThrustEnd = (float)((0.9 - KLFUtils.RndNextDouble() / 2) * 100);
+                        if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+                        {
+                            Log.Warning("underThrustStart: " + underThrustStart.ToString("N2") + ",  underThrustEnd: " + underThrustEnd.ToString("N2"));
+                        }
 
 
                         //if (startingPartEngineModule.thrustPercentage < 0)
-                        //    startingPartEngineModule.thrustPercentage = KLFUtils.RNG.NextDouble() / 4;
+                        //    startingPartEngineModule.thrustPercentage = KLFUtils.RndNextDouble() / 4;
 
                         //          startingPartEngineModule.part.Rigidbody.AddRelativeForce(Vector3.up * thrustOverload);
                         underthrustTime = Planetarium.GetUniversalTime() + 0.5;
@@ -637,7 +664,7 @@ namespace KerbalLaunchFailure
                     thisFailureChance = failureChance;
                 else
                     thisFailureChance = (KLFUtils.PartIsExplosiveFuelTank(potentialPart)) ? 1 : failureChance;
-                if (!doomedParts.Contains(potentialPart) && KLFUtils.RNG.NextDouble() < thisFailureChance)
+                if (!doomedParts.Contains(potentialPart) && KLFUtils.RndNextDouble() < thisFailureChance)
                 {
                     doomedParts.Add(potentialPart);
                     PropagateFailure(potentialPart, nextFailureChance);
@@ -651,17 +678,20 @@ namespace KerbalLaunchFailure
         /// <returns>True if yes, false if no.</returns>
         public static bool Occurs()
         {
-            double r = KLFUtils.RNG.NextDouble();
+            double r = KLFUtils.RndNextDouble();
  
             if (KLFUtils.ExperimentalPartsPresentAndActive())
             {
                 Log.Info("Experimental Parts present");
                 experimentalPartFailure = r < KLFSettings.Instance.ExpPartFailureProbability;
             }
-            partFailure = KLFUtils.RNG.NextDouble() < KLFSettings.Instance.InitialFailureProbability;
+            partFailure = KLFUtils.RndNextDouble() < KLFSettings.Instance.InitialFailureProbability;
 
             Log.Info("experimentalPartFailure: " + experimentalPartFailure.ToString() + "   partFailure: " + partFailure.ToString());
-
+            if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+            {
+                Log.Warning("experimentalPartFailure: " + experimentalPartFailure.ToString() + "   partFailure: " + partFailure.ToString());
+            }
             return experimentalPartFailure || partFailure;
             
         }

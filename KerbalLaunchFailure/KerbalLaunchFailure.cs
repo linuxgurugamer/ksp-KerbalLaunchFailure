@@ -119,7 +119,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         public void Awake()
         {
-            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().enabled)
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().enabled)
                 return;
             // When a launch occurs, start failure script.
             GameEvents.onLaunch.Add(FailureStartHandler);
@@ -230,7 +230,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         public void FixedUpdate()
         {
-            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().enabled)
+            if (!HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().enabled)
                 return;
 
             // float throttle = FlightGlobals.ActiveVessel.ctrlState.mainThrottle;
@@ -319,7 +319,7 @@ namespace KerbalLaunchFailure
             failure = new Failure();
             if (HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().allowEngineUnderthrust)
             {
-                failure.overThrust = KLFUtils.RNG.NextDouble() >= HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().engineUnderthrustProb;
+                failure.overThrust = KLFUtils.RndNextDouble() >= HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().engineUnderthrustProb;
             }
             else
                 failure.overThrust =true;

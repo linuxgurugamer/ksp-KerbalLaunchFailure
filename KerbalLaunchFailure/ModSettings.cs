@@ -12,10 +12,10 @@ using UnityEngine;
 namespace KerbalLaunchFailure
 {
 
-    public class KLFCustomParams : GameParameters.CustomParameterNode
+    public class KLF_1 : GameParameters.CustomParameterNode
     {
-        public static KLFCustomParams instance;
-        public KLFCustomParams()
+        public static KLF_1 instance;
+        public KLF_1()
         {
             instance = this;
         }
@@ -29,6 +29,11 @@ namespace KerbalLaunchFailure
 
         [GameParameters.CustomParameterUI("Mod Enabled?")]
         public bool enabled = true;
+
+
+        [GameParameters.CustomParameterUI("Debug mode?", 
+            toolTip ="Writes failure probabilities to the log")]
+        public bool debugMode = false;
 
         // The following crazy code is due to a bug introduced in 1.2.2
         // See this link for details:  http://forum.kerbalspaceprogram.com/index.php?/topic/7542-the-official-unoffical-quothelp-a-fellow-plugin-developerquot-thread/&page=100#comment-2887044
@@ -73,7 +78,7 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomParameterUI("Highlight failing part")]
         public bool highlightFailingPart = true;
 
-        [GameParameters.CustomParameterUI("Failure rate decreases with each propagation", toolTip = "If enabled, then the chance of successive failures decreases after each failure")]
+        [GameParameters.CustomParameterUI("Failure rate decreases ", toolTip = "If enabled, then the chance of failures on attached parts decreases after each failure")]
         public bool propagationChanceDecreases = false;
 
 
@@ -98,7 +103,7 @@ namespace KerbalLaunchFailure
 
         public float delayBetweenPartFail = 0.8F;
 
-        [GameParameters.CustomFloatParameterUI("Delay between part failures, in seconds", minValue = 0.2f, maxValue = 0.8f, stepCount = 101, displayFormat = "F1",
+        [GameParameters.CustomFloatParameterUI("Delay between part failures, (secs)s", minValue = 0.2f, maxValue = 0.8f, stepCount = 101, displayFormat = "F1",
             toolTip = "This is the time between each additional failure of a part.  So, if .2, then every .2 seconds the part will fail some more")]
         public float delayBetweenPartFailures
         {
@@ -106,10 +111,10 @@ namespace KerbalLaunchFailure
             set { delayBetweenPartFail = value / 100.0f; }
         }
 
-        [GameParameters.CustomFloatParameterUI("Min time before failure (seconds)", minValue = 5.0f, maxValue = 100.0f, stepCount = 100, displayFormat = "F1", logBase = 2)]
+        [GameParameters.CustomFloatParameterUI("Min time before failure (secs)", minValue = 5.0f, maxValue = 100.0f, stepCount = 100, displayFormat = "F1", logBase = 2)]
         public float minTimeBeforeFailure = 5.0F;
 
-        [GameParameters.CustomFloatParameterUI("Max time before failure (seconds)", minValue = 6.0f, maxValue = 3600.0f, stepCount = 100, displayFormat = "F1", logBase = 2)]
+        [GameParameters.CustomFloatParameterUI("Max time before failure (secs)", minValue = 6.0f, maxValue = 3600.0f, stepCount = 100, displayFormat = "F1", logBase = 2)]
         public float maxTimeBeforeFailure = 300.0F;
 
 
@@ -262,7 +267,7 @@ namespace KerbalLaunchFailure
         //        public float engineUnderthrustProbability = 0.3F;
    
         public float engineUnderthrustProb = 0.3F;
-        [GameParameters.CustomFloatParameterUI("Chance of engine failure being underthrust (%)", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
+        [GameParameters.CustomFloatParameterUI("Chance ofunderthrust engine failure (%)", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
         public float engineUnderthrustProbability
         {
             get { return engineUnderthrustProb * 100; }
@@ -411,7 +416,7 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomFloatParameterUI("Science Adjustment", toolTip = "The larger the number, the more science is generated from a failure", minValue = 10.0f, maxValue = 100.0f, stepCount = 91, displayFormat = "F1")]
         public float scienceAdjustment = 100.0F;
 
-        [GameParameters.CustomFloatParameterUI("Random factor applied to warning time", toolTip = "larger value make warning time more random", minValue = 0.0f, maxValue = 10.0f, stepCount = 101, displayFormat = "F1")]
+        [GameParameters.CustomFloatParameterUI("Random factor for to warning time", toolTip = "larger value make warning time more random", minValue = 0.0f, maxValue = 10.0f, stepCount = 101, displayFormat = "F1")]
         public float timeRandomness = 0.1F;
 
 

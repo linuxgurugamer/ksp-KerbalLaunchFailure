@@ -206,12 +206,12 @@ namespace KerbalLaunchFailure
         public bool LoadSettings()
         {
             
-            initialFailureProbability = (float)HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().initialFailureProb;
-            expPartFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().expPartFailureProb;
-            maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().maxFailureAltitudePerc;
-            propagationChanceDecreases = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().propagationChanceDecreases;
-            failurePropagateProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().failurePropagateProb;
-            delayBetweenPartFailures = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams>().delayBetweenPartFail;
+            initialFailureProbability = (float)HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().initialFailureProb;
+            expPartFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().expPartFailureProb;
+            maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().maxFailureAltitudePerc;
+            propagationChanceDecreases = HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().propagationChanceDecreases;
+            failurePropagateProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().failurePropagateProb;
+            delayBetweenPartFailures = HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().delayBetweenPartFail;
             autoAbort = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().autoAbort;
             autoAbortDelay = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().autoAbortDelay;
             preFailureWarningTime = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams2>().preFailureWarningTime;

@@ -48,3 +48,10 @@
 
 0.4.5
 		Fix for settings not loading properly.  Due to a KSP bug in 1.2.2, some extra coding had to be done, and one piece was missed.  Thanks to Github user @McFistyBuns for the code
+
+0.4.6
+		Added explicit seed for random number generator
+		Moved two calls which used the UnityEngine.Random to using the System.Random
+		shortened option descriptions to avoid wrapping
+		Moved all random calls to wrapper functions in KLFUtils 
+		Added debug mode to print data to log file

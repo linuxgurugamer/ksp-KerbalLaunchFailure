@@ -13,9 +13,26 @@ namespace KerbalLaunchFailure
         /// </summary>
         private const float ExplosiveTankThreshold = 0.05F;
 
-        private static System.Random rng = new System.Random();
+        private static int seed = (int)DateTime.UtcNow.Ticks;
+        private static System.Random rng = new System.Random(seed);
 
         public static System.Random RNG { get { return rng; } }
+
+        public static double RndNextDouble()
+        {
+            double r = RNG.NextDouble();
+            if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+                Log.Warning("rnd: " + r.ToString("N2"));
+            return r;
+        }
+        public static float RngRange(float low, float high)
+        {
+            float range = high - low;
+            float r = (float)RNG.NextDouble();
+            if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
+                Log.Warning("RngRange:  low: " + low.ToString("n2") + " - " + high.ToString("n2") + ", rnd: " + range.ToString("N2"));
+            return r * range + low;
+        }
 
         public static float GameTicksPerSecond
         {
