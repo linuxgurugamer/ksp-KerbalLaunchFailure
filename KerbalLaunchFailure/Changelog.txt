@@ -59,3 +59,6 @@
 0.4.7
 		Replaced Warning and Failed icons with new ones supplied by forum user @doggonemess
 		Old icons are in a zip file called oldIcons.zip
+
+0.4.8
+		Updated for KSP 1.3.1

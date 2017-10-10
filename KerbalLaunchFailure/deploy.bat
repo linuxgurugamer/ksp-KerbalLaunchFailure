@@ -1,6 +1,6 @@
 ﻿
 
-set H=R:\KSP_1.3.0_dev
+set H=R:\KSP_1.3.1_dev
 echo %H%
 
 set d=%H%
@@ -26,4 +26,4 @@ mkdir %d%
 copy bin\Debug\KerbalLaunchFailure.dll ..\GameData\KerbalLaunchFailure\Plugins
 
 
-xcopy /y /s "..\GameData\KerbalLaunchFailure" "%H%\GameData\KerbalLaunchFailure"
+xcopy /y /s /i "..\GameData\KerbalLaunchFailure" "%H%\GameData\KerbalLaunchFailure"
