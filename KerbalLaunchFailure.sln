@@ -1,19 +1,19 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26730.8
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KerbalLaunchFailure", "KerbalLaunchFailure\KerbalLaunchFailure.csproj", "{F1AAC40A-DD70-4D5A-B95F-2EC8543FBC95}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionFolder", "SolutionFolder", "{3E5CFA9E-6F27-4D05-A9FE-FC1F49513573}"
 	ProjectSection(SolutionItems) = preProject
-		KerbalLaunchFailure\buildRelease.bat = KerbalLaunchFailure\buildRelease.bat
-		KerbalLaunchFailure\Changelog.txt = KerbalLaunchFailure\Changelog.txt
-		KerbalLaunchFailure\deploy.bat = KerbalLaunchFailure\deploy.bat
-		KerbalLaunchFailure\KerbalLaunchFailure.version = KerbalLaunchFailure\KerbalLaunchFailure.version
+		buildRelease.bat = buildRelease.bat
+		Changelog.txt = Changelog.txt
+		deploy.bat = deploy.bat
+		KerbalLaunchFailure.version = KerbalLaunchFailure.version
 		LICENSE = LICENSE
 		README.md = README.md
-		KerbalLaunchFailure\TODO.txt = KerbalLaunchFailure\TODO.txt
+		TODO.txt = TODO.txt
 	EndProjectSection
 EndProject
 Global
@@ -29,5 +29,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FE026D2C-32E8-4572-AB85-56B6C09F8395}
 	EndGlobalSection
 EndGlobal

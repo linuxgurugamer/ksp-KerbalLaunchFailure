@@ -82,11 +82,13 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>start /D D:\Users\jbb\github\KerbalLaunchFailure\KerbalLaunchFailure  /WAIT deploy.bat
+    <PostBuildEvent>
+start /D D:\Users\jbb\github\KerbalLaunchFailure /WAIT deploy.bat  $(TargetDir) $(TargetFileName)
 
 if $(ConfigurationName) == Release (
-start /D D:\Users\jbb\github\KerbalLaunchFailure\KerbalLaunchFailure /WAIT buildRelease.bat
-)</PostBuildEvent>
+	start /D D:\Users\jbb\github\KerbalLaunchFailure /WAIT buildRelease.bat $(TargetDir) $(TargetFileName)
+)
+</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
