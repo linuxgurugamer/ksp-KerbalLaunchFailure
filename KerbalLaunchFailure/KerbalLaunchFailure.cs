@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using KSP.UI.Screens;
+using ClickThroughFix;
+using ToolbarControl_NS;
 
 namespace KerbalLaunchFailure
 {
@@ -49,7 +51,8 @@ namespace KerbalLaunchFailure
         const float WINDOW_WIDTH = 225;
         const float WINDOW_HEIGHT = 200;
 
-        internal ApplicationLauncherButton launcherButton = null;
+        //internal ApplicationLauncherButton launcherButton = null;
+        ToolbarControl toolbarControl;
         bool abortButtonYellow = false;
         public Texture2D GetImage(String path, int width, int height)
         {
@@ -59,6 +62,7 @@ namespace KerbalLaunchFailure
         }
         private void OnGUIApplicationLauncherReady()
         {
+#if false
             if (launcherButton == null)
             {
                 launcherButton = ApplicationLauncher.Instance.AddModApplication(
@@ -68,6 +72,17 @@ namespace KerbalLaunchFailure
                     ApplicationLauncher.AppScenes.FLIGHT,
                     GetImage("KerbalLaunchFailure/Textures/allSystemsGo", 38, 38));
             }
+#endif
+            toolbarControl = gameObject.AddComponent<ToolbarControl>();
+            toolbarControl.AddToAllToolbars(abortWindow, abortWindow,
+                ApplicationLauncher.AppScenes.FLIGHT,
+                "KerbalLaunchFailure_NS",
+                "kerbalLaunchfailureButton",
+                "KerbalLaunchFailure/PluginData/Textures/allSystemsGo",
+                "KerbalLaunchFailure/PluginData/Textures/allSystemsGo_24",
+                "Kerbal Launch Failure"
+            );
+            toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().useBlizzy);
         }
 
         void abortWindow()
@@ -81,11 +96,11 @@ namespace KerbalLaunchFailure
         double lastUpdate = 0f;
         void updateToolbarButton()
         {
-            if (launcherButton == null || failure == null)
+            if (toolbarControl == null || failure == null)
                 return;
             if (failure.failurecomplete)
             {
-                launcherButton.SetTexture(GetImage("KerbalLaunchFailure/Textures/failed", 38, 38));
+                toolbarControl.SetTexture("KerbalLaunchFailure/PluginData/Textures/failed", "KerbalLaunchFailure/PluginData/Textures/failed_24");
                 failure.failurecomplete = false;
                 return;
             }
@@ -97,19 +112,21 @@ namespace KerbalLaunchFailure
 
                 abortButtonYellow = !abortButtonYellow;
                 if (abortButtonYellow)
-                    launcherButton.SetTexture(GetImage("KerbalLaunchFailure/Textures/warning", 38, 38));
+                    toolbarControl.SetTexture("KerbalLaunchFailure/PluginData/Textures/warning", "KerbalLaunchFailure/PluginData/Textures/warning_24");
                 else
-                    launcherButton.SetTexture(GetImage("KerbalLaunchFailure/Textures/warning2", 38, 38));
+                    toolbarControl.SetTexture("KerbalLaunchFailure/PluginData/Textures/warning2", "KerbalLaunchFailure/PluginData/Textures/warning2_24");
             }
         }
 
         public void removeLauncherButtons()
         {
-            if (launcherButton != null)
+            if (toolbarControl != null)
             {
                // GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIApplicationLauncherReady);
-                ApplicationLauncher.Instance.RemoveModApplication(launcherButton);
-                launcherButton = null;
+                //ApplicationLauncher.Instance.RemoveModApplication(launcherButton);
+                //launcherButton = null;
+                toolbarControl.OnDestroy();
+                Destroy(toolbarControl);
             }
         }
 
@@ -133,7 +150,7 @@ namespace KerbalLaunchFailure
             windowRect = new Rect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             windowRect.center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
 
-            if (launcherButton == null)
+            if (toolbarControl == null)
             {
                 OnGUIApplicationLauncherReady();
             }
@@ -142,6 +159,9 @@ namespace KerbalLaunchFailure
         void OnGUI()
         {
             //Log.Info("OnGUI");
+            if (toolbarControl != null)
+                toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().useBlizzy);
+
             if (Failure.Instance == null || FlightDriver.Pause)
                 return;
             
@@ -149,7 +169,7 @@ namespace KerbalLaunchFailure
                 return;
 
             GUI.skin = HighLogic.Skin;
-            windowRect = GUILayout.Window(myWindowId, windowRect, Window, "AutoAbort Cancel/Reset");
+            windowRect = ClickThruBlocker.GUILayoutWindow(myWindowId, windowRect, Window, "AutoAbort Cancel/Reset");
         }
 
         public void Window(int windowID)
