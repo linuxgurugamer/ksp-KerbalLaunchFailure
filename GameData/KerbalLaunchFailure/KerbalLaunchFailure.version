@@ -1,11 +1,18 @@
 ﻿{
   "NAME": "KerbalLaunchFailure",
-  "URL": "https://raw.githubusercontent.com/linuxgurugamer/ksp-KerbalLaunchFailure/master/KerbalLaunchFailure/KerbalLaunchFailure.version",
+  "URL": "https://raw.githubusercontent.com/linuxgurugamer/ksp-KerbalLaunchFailure/master/KerbalLaunchFailure.version",
+    "DOWNLOAD" : "https://github.com/linuxgurugamer/KerbalLaunchFailure/releases",
+    "GITHUB" :
+    {
+        "USERNAME" : "linuxgurugamer",
+        "REPOSITORY" : "KerbalLaunchFailure"
+    },
+
   "VERSION": {
     "MAJOR": 0,
     "MINOR": 4,
     "PATCH": 9,
-    "BUILD": 0
+    "BUILD": 1
   },
   "KSP_VERSION": {
     "MAJOR": 1,

@@ -67,3 +67,6 @@
 		Updated for 1.4.1
 		Added support for the ClickthroughBlocker
 		Added support for the ToolbarController
+
+0.4.9.1
+		Updated changelog
