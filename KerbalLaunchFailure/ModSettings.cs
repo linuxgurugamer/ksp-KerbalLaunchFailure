@@ -30,9 +30,6 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomParameterUI("Mod Enabled?")]
         public bool enabled = true;
 
-        [GameParameters.CustomParameterUI("use Blizzy toolbar, if available")]
-        public bool useBlizzy = false;
-
         [GameParameters.CustomParameterUI("Debug mode?", 
             toolTip ="Writes failure probabilities to the log")]
         public bool debugMode = false;

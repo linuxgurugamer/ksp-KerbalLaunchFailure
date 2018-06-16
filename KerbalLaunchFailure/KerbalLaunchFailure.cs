@@ -9,6 +9,15 @@ using ToolbarControl_NS;
 
 namespace KerbalLaunchFailure
 {
+    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
+    public class RegisterToolbar : MonoBehaviour
+    {
+        void Start()
+        {
+            ToolbarControl.RegisterMod(KerbalLaunchFailureController.MODID, KerbalLaunchFailureController.MODNAME);
+        }
+    }
+
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class KerbalLaunchFailureController : MonoBehaviour
     {
@@ -60,6 +69,10 @@ namespace KerbalLaunchFailure
             img = GameDatabase.Instance.GetTexture(path, false);
             return img;
         }
+
+        internal const string MODID = "KerbalLaunchFailure_NS";
+        internal const string MODNAME = "Kerbal Launch Failure";
+
         private void OnGUIApplicationLauncherReady()
         {
 #if false
@@ -76,13 +89,12 @@ namespace KerbalLaunchFailure
             toolbarControl = gameObject.AddComponent<ToolbarControl>();
             toolbarControl.AddToAllToolbars(abortWindow, abortWindow,
                 ApplicationLauncher.AppScenes.FLIGHT,
-                "KerbalLaunchFailure_NS",
+                MODID,
                 "kerbalLaunchfailureButton",
                 "KerbalLaunchFailure/PluginData/Textures/allSystemsGo",
                 "KerbalLaunchFailure/PluginData/Textures/allSystemsGo_24",
-                "Kerbal Launch Failure"
+                MODNAME
             );
-            toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().useBlizzy);
         }
 
         void abortWindow()
@@ -159,8 +171,6 @@ namespace KerbalLaunchFailure
         void OnGUI()
         {
             //Log.Info("OnGUI");
-            if (toolbarControl != null)
-                toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().useBlizzy);
 
             if (Failure.Instance == null || FlightDriver.Pause)
                 return;

@@ -70,3 +70,7 @@
 
 0.4.9.1
 		Updated changelog
+
+0.4.10
+	Updated to use latest vresion of ToolbarController
+	Added dependency checking
