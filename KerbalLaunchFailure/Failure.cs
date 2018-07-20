@@ -86,7 +86,7 @@ namespace KerbalLaunchFailure
         public void disableAlarm()
         {
             Log.Info("disableAlarm");
-            if (KerbalLaunchFailureController.alarmSound != null)            
+            if (KerbalLaunchFailureController.alarmSound != null)
                 KerbalLaunchFailureController.alarmSound.audio.Stop();
             KerbalLaunchFailureController.soundPlaying = false;
             alarmDisabled = true;
@@ -137,9 +137,8 @@ namespace KerbalLaunchFailure
                     var rnd = KLFUtils.RngRange(0.75f, 1.25f);
                     float r = (float)Math.Log(vesselCost, 10) * rnd;
                     if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
-                    {
                         Log.Warning("CalcScienceReward: Log(vesselCost): " + Math.Log(vesselCost, 10).ToString("N2") + ",  rnd: " + rnd.ToString("N2"));
-                    }
+         
                     if (r < 1)
                         r *= 10f;
                     if (r < 1)
@@ -170,18 +169,14 @@ namespace KerbalLaunchFailure
             if (currentCelestialBody.atmosphere)
             {
                 altitudeFailureOccurs = KLFUtils.RNG.Next(0, (int)(currentCelestialBody.atmosphereDepth * KLFSettings.Instance.MaxFailureAltitudePercentage));
-#if DEBUG
-                KLFUtils.LogDebugMessage("Failure will occur at an altitude of " + altitudeFailureOccurs);
-                Log.Info("currentCelestialBody.atmosphereDepth: " + currentCelestialBody.atmosphereDepth.ToString());
-                Log.Info("KLFSettings.Instance.MaxFailureAltitudePercentage: " + KLFSettings.Instance.MaxFailureAltitudePercentage.ToString());
-#else
+
                 if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
                 {
                     Log.Warning("Failure will occur at an altitude of " + altitudeFailureOccurs);
                     Log.Warning("currentCelestialBody.atmosphereDepth: " + currentCelestialBody.atmosphereDepth.ToString());
                     Log.Warning("KLFSettings.Instance.MaxFailureAltitudePercentage: " + KLFSettings.Instance.MaxFailureAltitudePercentage.ToString());
                 }
-#endif
+
             }
             else
             {
@@ -220,17 +215,19 @@ namespace KerbalLaunchFailure
         /// <returns></returns>
         public bool Run()
         {
-            //Log.Info("Run, activeVessel.altitude: " + activeVessel.altitude.ToString() + "   altitudeFailureOccurs: " + altitudeFailureOccurs.ToString());
+            Log.Info("Run, activeVessel.altitude: " + activeVessel.altitude.ToString() + "   altitudeFailureOccurs: " + altitudeFailureOccurs.ToString());
 
-            // Kill the failure script if there is no atmosphere.
-            if (!currentCelestialBody.atmosphere) return false;
+            // Kill the failure script if there is no atmosphere, or mission time is too long.
+            if (!currentCelestialBody.atmosphere || activeVessel.missionTime > HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().maxTimeBeforeFailure)
+                return false;
 
             // Wait until the minimum time before failure has passed
-            if (Planetarium.GetUniversalTime() - launchTime < HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().minTimeBeforeFailure)
+            if (activeVessel.missionTime < HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().minTimeBeforeFailure)
                 return true;
 
-            // Wait until the vessel is past the altitude threshold AND the max time before failure hasn't passed
-            if (activeVessel.altitude < altitudeFailureOccurs && Planetarium.GetUniversalTime() - launchTime < HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().maxTimeBeforeFailure) return true;
+            // Wait until the vessel is past the altitude threshold
+            if (activeVessel.altitude < altitudeFailureOccurs)
+                return true;
 
             // Prepare the doomed parts if not done so.
             if (startingPart == null && doomedParts == null)
@@ -331,13 +328,12 @@ namespace KerbalLaunchFailure
 
             // Determine the starting part.
             int startingPartIndex = KLFUtils.RNG.Next(0, cnt);
-            Log.Info("activeEngineParts.Count: " + activeEngineParts.Count.ToString() + "    radialDecouplers.Count: " + radialDecouplers.Count.ToString() +
-                "   controlSurfaces.Count: " + controlSurfaces.Count.ToString() + "   strutsAndFuelLines.Count: " + strutsAndFuelLines.Count);
-            Log.Info("startingPartIndex: " + startingPartIndex.ToString());
+
+
             if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
             {
                 Log.Warning("activeEngineParts.Count: " + activeEngineParts.Count.ToString() + "    radialDecouplers.Count: " + radialDecouplers.Count.ToString() +
-               "   controlSurfaces.Count: " + controlSurfaces.Count.ToString() + "   strutsAndFuelLines.Count: " + strutsAndFuelLines.Count);
+                    "   controlSurfaces.Count: " + controlSurfaces.Count.ToString() + "   strutsAndFuelLines.Count: " + strutsAndFuelLines.Count);
                 Log.Warning("startingPartIndex: " + startingPartIndex.ToString());
             }
 
@@ -349,11 +345,13 @@ namespace KerbalLaunchFailure
                 failureType = FailureType.engine;
 
                 // Get the engine module for the part.
-				foreach (ModuleEngines engineModule in startingPart.Modules.OfType<ModuleEngines>().ToList()) {
-					if (engineModule.enabled && engineModule.currentThrottle > 0) {
-						startingPartEngineModule = engineModule;
-					}
-				}
+                foreach (ModuleEngines engineModule in startingPart.Modules.OfType<ModuleEngines>().ToList())
+                {
+                    if (engineModule.enabled && engineModule.currentThrottle > 0)
+                    {
+                        startingPartEngineModule = engineModule;
+                    }
+                }
             }
             offset += activeEngineParts.Count;
             if (startingPartIndex >= offset && startingPartIndex < offset + radialDecouplers.Count)
@@ -412,12 +410,11 @@ namespace KerbalLaunchFailure
             preFailureWarningTime = KLFSettings.Instance.PreFailureWarningTime;
             if (KLFSettings.Instance.TimeRandomness > 0)
             {
-//                float f = UnityEngine.Random.Range(0, KLFSettings.Instance.TimeRandomness) - KLFSettings.Instance.TimeRandomness / 2f;
+                //                float f = UnityEngine.Random.Range(0, KLFSettings.Instance.TimeRandomness) - KLFSettings.Instance.TimeRandomness / 2f;
                 float f = KLFUtils.RngRange((float)0, KLFSettings.Instance.TimeRandomness) - KLFSettings.Instance.TimeRandomness / 2f;
                 if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
-                {
                     Log.Warning("preFailureWarningtime: " + preFailureWarningTime.ToString("N2") + ",  timeRandomness: " + f.ToString("N2"));
-                }
+
                 preFailureWarningTime += f;
             }
         }
@@ -461,7 +458,7 @@ namespace KerbalLaunchFailure
 
                 // Calculate actual throttle, the lower of either the throttle setting or the current thrust / max thrust
                 float throttle = startingPartEngineModule.finalThrust / startingPartEngineModule.maxThrust;
-                
+
 
                 if (overThrust)
                 {
@@ -479,10 +476,8 @@ namespace KerbalLaunchFailure
                         underThrustStart = underThrustEnd;
                         underThrustEnd = (float)((0.9 - KLFUtils.RndNextDouble() / 2) * 100);
                         if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
-                        {
                             Log.Warning("underThrustStart: " + underThrustStart.ToString("N2") + ",  underThrustEnd: " + underThrustEnd.ToString("N2"));
-                        }
-
+  
 
                         //if (startingPartEngineModule.thrustPercentage < 0)
                         //    startingPartEngineModule.thrustPercentage = KLFUtils.RndNextDouble() / 4;
@@ -679,7 +674,7 @@ namespace KerbalLaunchFailure
         public static bool Occurs()
         {
             double r = KLFUtils.RndNextDouble();
- 
+
             if (KLFUtils.ExperimentalPartsPresentAndActive())
             {
                 Log.Info("Experimental Parts present");
@@ -689,11 +684,10 @@ namespace KerbalLaunchFailure
 
             Log.Info("experimentalPartFailure: " + experimentalPartFailure.ToString() + "   partFailure: " + partFailure.ToString());
             if (HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().debugMode)
-            {
                 Log.Warning("experimentalPartFailure: " + experimentalPartFailure.ToString() + "   partFailure: " + partFailure.ToString());
-            }
+
             return experimentalPartFailure || partFailure;
-            
+
         }
     }
 }

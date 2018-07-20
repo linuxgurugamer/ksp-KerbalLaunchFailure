@@ -362,6 +362,7 @@ namespace KerbalLaunchFailure
         /// </summary>
         private void DestroyFailureRun()
         {
+            Log.Info("DestroyFailureRun");
             updateToolbarButton();
             isFailureScriptActive = false;
             isGamePaused = false;

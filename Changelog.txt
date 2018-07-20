@@ -72,5 +72,10 @@
 		Updated changelog
 
 0.4.10
-	Updated to use latest vresion of ToolbarController
+	Updated to use latest version of ToolbarController
+	Removed option for Blizzy Toolbar (now handled by ToolbarController)
 	Added dependency checking
+
+0.4.10.1
+	Changed timechecks to use vessel.missionTime
+	Fixed typo in settings page

@@ -266,7 +266,7 @@ namespace KerbalLaunchFailure
         //        public float engineUnderthrustProbability = 0.3F;
    
         public float engineUnderthrustProb = 0.3F;
-        [GameParameters.CustomFloatParameterUI("Chance ofunderthrust engine failure (%)", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
+        [GameParameters.CustomFloatParameterUI("Chance of underthrust engine failure (%)", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
         public float engineUnderthrustProbability
         {
             get { return engineUnderthrustProb * 100; }
