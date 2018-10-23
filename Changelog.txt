@@ -79,3 +79,6 @@
 0.4.10.1
 	Changed timechecks to use vessel.missionTime
 	Fixed typo in settings page
+
+0.4.10.2
+	Version bump for 1.5 rebuild
