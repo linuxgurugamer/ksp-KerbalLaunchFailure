@@ -15,7 +15,7 @@ This mod is not meant to compete with other part failure mods (I personally enjo
 * Failure checks end once the spacecraft has reach space (IRL, disasters mostly happen during ascent anyways). This is to prevent frustration for longer missions, to reduce the complexity of the mod, and to lessen the CPU usage for game ticks.
 
 ### Custom settings
-Settings file can be found at "GameData/KerbalLaunchFailure/Plugins/PluginData/KLF_Settings.cfg"
+Settings can be found in the stock settings page.
 * **initialFailureProbability** - Sets the probability that a failure will occur during launch ascent. Default is 2% (1 in 50 chance).
 * **maxFailureAltitudePercentage** - The max height at which the failure will occur as a percentage of atmosphere depth. Default is 65% (for stock Kerbin, about 45.5km up); recommend not going above this amount for right now.
 * **propagationChanceDecreases** - The chance of a failure to propagate to a nearby part. Set to True to greatly lessen the explosiveness of a failure. Default is False.

@@ -82,3 +82,9 @@
 
 0.4.10.2
 	Version bump for 1.5 rebuild
+
+0.4.10.4
+	Added InstallChecker
+	Updated AssemblyVersion.tt
+	Updated README.md with correct info on settings
+	Deleted unused file & cleaned up some old code

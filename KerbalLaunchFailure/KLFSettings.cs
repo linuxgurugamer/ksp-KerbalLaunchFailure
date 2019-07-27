@@ -9,15 +9,6 @@ namespace KerbalLaunchFailure
 {
     internal class KLFSettings
     {
-        /// <summary>
-        /// Config node name for settings.
-        /// </summary>
-        //private const string ConfigNodeName = "KERBALLAUNCHFAILURE_SETTINGS";
-
-        /// <summary>
-        /// Name of settings file.
-        /// </summary>
-       // private const string LocalSettingsFile = "KLF_Settings.cfg";
 
         // Default values for settings.
         private float initialFailureProbability = 0.02F;
@@ -73,7 +64,7 @@ namespace KerbalLaunchFailure
         {
             get { return expPartFailureProbability; }
         }
-        
+
 
         /// <summary>
         /// The maximum altitude as a percentage in which the failure can begin.
@@ -147,23 +138,6 @@ namespace KerbalLaunchFailure
         /// </summary>
         private static KLFSettings instance;
 
-#if false
-        /// <summary>
-        /// The local path to the settings file.
-        /// </summary>
-        private static string LocalSettingsPath
-        {
-            get { return Path.Combine(KerbalLaunchFailureController.LocalPluginDataPath, LocalSettingsFile); }
-        }
-
-        /// <summary>
-        /// The absolute path to the settings file.
-        /// </summary>
-        private static string AbsoluteSettingsPath
-        {
-            get { return Path.Combine(KSPUtil.ApplicationRootPath, LocalSettingsPath); }
-        }
-#endif
         /// <summary>
         /// Settings instance.
         /// </summary>
@@ -184,28 +158,16 @@ namespace KerbalLaunchFailure
         /// </summary>
         private KLFSettings()
         {
-#if false
-            if (!File.Exists(AbsoluteSettingsPath))
-            {
-                SaveSettings();
-            }
-            else
-            {
-#endif
-                if (!LoadSettings())
-                {
-      //              SaveSettings();
-                }
-          //  }
+            LoadSettings();            
         }
 
         /// <summary>
-        /// Loads the settings from file.
+        /// Loads the settings.
         /// </summary>
         /// <returns></returns>
-        public bool LoadSettings()
+        public void LoadSettings()
         {
-            
+
             initialFailureProbability = (float)HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().initialFailureProb;
             expPartFailureProbability = HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().expPartFailureProb;
             maxFailureAltitudePercentage = HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().maxFailureAltitudePerc;
@@ -221,7 +183,6 @@ namespace KerbalLaunchFailure
             timeRandomness = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams3>().timeRandomness;
             scienceAtFailure = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams3>().scienceAtFailure;
             scienceAdjustment = HighLogic.CurrentGame.Parameters.CustomParams<KLFCustomParams3>().scienceAdjustment;
-            return true;
         }
     }
 }

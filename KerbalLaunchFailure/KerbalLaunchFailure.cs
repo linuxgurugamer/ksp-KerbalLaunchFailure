@@ -75,17 +75,6 @@ namespace KerbalLaunchFailure
 
         private void OnGUIApplicationLauncherReady()
         {
-#if false
-            if (launcherButton == null)
-            {
-                launcherButton = ApplicationLauncher.Instance.AddModApplication(
-                    abortWindow,
-                    abortWindow,
-                    null, null, null, null,
-                    ApplicationLauncher.AppScenes.FLIGHT,
-                    GetImage("KerbalLaunchFailure/Textures/allSystemsGo", 38, 38));
-            }
-#endif
             toolbarControl = gameObject.AddComponent<ToolbarControl>();
             toolbarControl.AddToAllToolbars(abortWindow, abortWindow,
                 ApplicationLauncher.AppScenes.FLIGHT,
