@@ -1,4 +1,6 @@
-﻿0.1.0
+﻿ChangeLog
+
+0.1.0
 		Initial re-release
 		fixed bug with exploding part not being on the vessel, for example, an SRB is decoupled before it explodes
 		Removed config file, now using 1.2 settings page
@@ -88,3 +90,6 @@
 	Updated AssemblyVersion.tt
 	Updated README.md with correct info on settings
 	Deleted unused file & cleaned up some old code
+
+0.4.11
+	Updated for KSP 1.8
