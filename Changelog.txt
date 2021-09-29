@@ -93,3 +93,7 @@
 
 0.4.11
 	Updated for KSP 1.8
+
+0.4.11.1
+	Added AssemblyFileVersion
+	Updated version file for 1.12
