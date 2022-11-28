@@ -123,11 +123,11 @@ namespace KerbalLaunchFailure
             switch (preset)
             {
                 case GameParameters.Preset.Easy:
-                    initialFailureProbability = 0.02F;
-                    expPartFailureProbability = 0.8f;
-                    maxFailureAltitudePercentage = 0.65F;
+                    initialFailureProb = 0.02F;
+                    expPartFailureProb = 0.08f;
+                    maxFailureAltitudePerc = 0.65F;
                     propagationChanceDecreases = true;
-                    failurePropagateProbability = 0.5F;
+                    failurePropagateProb = 0.5F;
                     delayBetweenPartFailures = 0.5F;
                     highlightFailingPart = true;
                     minTimeBeforeFailure = 5.0F;
@@ -135,11 +135,11 @@ namespace KerbalLaunchFailure
                     break;
 
                 case GameParameters.Preset.Normal:
-                    initialFailureProbability = 0.02F;
-                    expPartFailureProbability = 0.1f;
-                    maxFailureAltitudePercentage = 0.65F;
+                    initialFailureProb = 0.02F;
+                    expPartFailureProb = 0.1f;
+                    maxFailureAltitudePerc = 0.65F;
                     propagationChanceDecreases = false;
-                    failurePropagateProbability = 0.6F;
+                    failurePropagateProb = 0.6F;
                     delayBetweenPartFailures = 0.2F;
                     highlightFailingPart = true;
                     minTimeBeforeFailure = 5.0F;
@@ -148,11 +148,11 @@ namespace KerbalLaunchFailure
                     break;
 
                 case GameParameters.Preset.Moderate:
-                    initialFailureProbability = 0.02F;
-                    expPartFailureProbability = 0.15f;
-                    maxFailureAltitudePercentage = 0.65F;
+                    initialFailureProb = 0.02F;
+                    expPartFailureProb = 0.15f;
+                    maxFailureAltitudePerc = 0.65F;
                     propagationChanceDecreases = false;
-                    failurePropagateProbability = 0.7F;
+                    failurePropagateProb = 0.7F;
                     delayBetweenPartFailures = 0.15F;
                     highlightFailingPart = true;
                     minTimeBeforeFailure = 5.0F;
@@ -161,11 +161,11 @@ namespace KerbalLaunchFailure
                     break;
 
                 case GameParameters.Preset.Hard:
-                    initialFailureProbability = 0.02F;
-                    expPartFailureProbability = 0.2f;
-                    maxFailureAltitudePercentage = 0.65F;
+                    initialFailureProb = 0.02F;
+                    expPartFailureProb = 0.2f;
+                    maxFailureAltitudePerc = 0.65F;
                     propagationChanceDecreases = false;
-                    failurePropagateProbability = 0.8F;
+                    failurePropagateProb = 0.8F;
                     delayBetweenPartFailures = 0.1F;
                     highlightFailingPart = false;
                     minTimeBeforeFailure = 5.0F;
@@ -299,7 +299,7 @@ namespace KerbalLaunchFailure
                     alarmSoundFile = "WhoopWhoop";
                     allowEngineFailures = true;
                     allowEngineUnderthrust = true;
-                    engineUnderthrustProbability = 0.3F;
+                    engineUnderthrustProb = 0.3F;
                     allowRadialDecouplerFailures = true;
                     allowControlSurfaceFailures = true;
                     allowStrutFuelFailures = true;
@@ -313,7 +313,7 @@ namespace KerbalLaunchFailure
                     alarmSoundFile = "WhoopWhoop";
                     allowEngineFailures = true;
                     allowEngineUnderthrust = true;
-                    engineUnderthrustProbability = 0.3F;
+                    engineUnderthrustProb = 0.3F;
                     allowRadialDecouplerFailures = true;
                     allowControlSurfaceFailures = true;
                     allowStrutFuelFailures = true;
@@ -327,7 +327,7 @@ namespace KerbalLaunchFailure
                     alarmSoundFile = "WhoopWhoop";
                     allowEngineFailures = true;
                     allowEngineUnderthrust = true;
-                    engineUnderthrustProbability = 0.3F;
+                    engineUnderthrustProb = 0.3F;
                     allowRadialDecouplerFailures = true;
                     allowControlSurfaceFailures = true;
                     allowStrutFuelFailures = true;
@@ -341,7 +341,7 @@ namespace KerbalLaunchFailure
                     alarmSoundFile = "WhoopWhoop";
                     allowEngineFailures = true;
                     allowEngineUnderthrust = true;
-                    engineUnderthrustProbability = 0.3F;
+                    engineUnderthrustProb = 0.3F;
                     allowRadialDecouplerFailures = true;
                     allowControlSurfaceFailures = true;
                     allowStrutFuelFailures = true;
