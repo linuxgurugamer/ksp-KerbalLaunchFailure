@@ -97,3 +97,8 @@
 0.4.11.1
 	Added AssemblyFileVersion
 	Updated version file for 1.12
+
+0.4.11.2
+	Thanks to github user @harveyt for these:
+		Fixed Easy "Exp. Part Failure" from 80% to the more likely 8% (typo?)
+		A previous fix changed from using "Probability/Percentage" to "Prob/Perc" floats without changing the variables in the SetDifficultyPreset() methods.
