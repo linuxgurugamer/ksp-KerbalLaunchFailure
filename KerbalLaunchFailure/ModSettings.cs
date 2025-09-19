@@ -20,7 +20,7 @@ namespace KerbalLaunchFailure
             instance = this;
         }
 
-        public override string Title { get { return "";  } }
+        public override string Title { get { return ""; } }
         public override GameParameters.GameMode GameMode { get { return GameParameters.GameMode.ANY; } }
         public override string Section { get { return "KerbalLaunchFailure"; } }
         public override string DisplaySection { get { return "KerbalLaunchFailure"; } }
@@ -30,8 +30,8 @@ namespace KerbalLaunchFailure
         [GameParameters.CustomParameterUI("Mod Enabled?")]
         public bool enabled = true;
 
-        [GameParameters.CustomParameterUI("Debug mode?", 
-            toolTip ="Writes failure probabilities to the log")]
+        [GameParameters.CustomParameterUI("Debug mode?",
+            toolTip = "Writes failure probabilities to the log")]
         public bool debugMode = false;
 
         // The following crazy code is due to a bug introduced in 1.2.2
@@ -185,25 +185,12 @@ namespace KerbalLaunchFailure
                 if (initialFailureProbability > expPartFailureProbability)
                     expPartFailureProbability = initialFailureProbability;
             }
-#if false
-            if (enabled == false) //Otherwise it depends on the value of MyBool if it's false return false
-            {
-                return false;
-            }
-#endif
             return true; //otherwise return true
 
         }
 
         public override bool Interactible(MemberInfo member, GameParameters parameters)
         {
-#if false
-            if (member.Name == "MyBool") //This Field must always be Interactible.
-                return true;
-            if (MyBool == false)  //Otherwise it depends on the value of MyBool if it's false return false
-                return false;
-#endif
-            
             return true; //otherwise return true
         }
 
@@ -264,7 +251,7 @@ namespace KerbalLaunchFailure
 
         //        [GameParameters.CustomFloatParameterUI("Chance of engine failure being underthrust", minValue = 0.01f, maxValue = 1.0f, stepCount = 100, asPercentage = true)]
         //        public float engineUnderthrustProbability = 0.3F;
-   
+
         public float engineUnderthrustProb = 0.3F;
         [GameParameters.CustomFloatParameterUI("Chance of underthrust engine failure (%)", minValue = 0, maxValue = 100, stepCount = 1, asPercentage = false)]
         public float engineUnderthrustProbability
@@ -273,15 +260,13 @@ namespace KerbalLaunchFailure
             set { engineUnderthrustProb = value / 100.0f; }
         }
 
-
-
         [GameParameters.CustomParameterUI("Allow radial decoupler failures")]
         public bool allowRadialDecouplerFailures = true;
 
         [GameParameters.CustomParameterUI("Allow control surface failures")]
         public bool allowControlSurfaceFailures = true;
 
-        [GameParameters.CustomParameterUI("Allow strut & fuel line failures", toolTip ="This does not apply to any autostruts")]
+        [GameParameters.CustomParameterUI("Allow strut & fuel line failures", toolTip = "This does not apply to any autostruts")]
         public bool allowStrutFuelFailures = true;
 
 
@@ -359,12 +344,7 @@ namespace KerbalLaunchFailure
             if (member.Name == "allowEngineUnderthrust")
                 return allowEngineFailures;
 
-            //if (KLFCustomParams.instance.enabled == false) //Otherwise it depends on the value of MyBool if it's false return false
-            //{
-            //    return false;
-            //}
-
-                return true; //otherwise return true
+            return true; //otherwise return true
 
         }
 
@@ -462,4 +442,4 @@ namespace KerbalLaunchFailure
         }
     }
 
-    }
+}

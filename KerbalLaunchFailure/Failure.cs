@@ -378,27 +378,6 @@ namespace KerbalLaunchFailure
                 decouplerForceCnt = 0;
             }
 
-
-
-
-#if false
-
-            if (startingPartIndex >= activeEngineParts.Count)
-            {
-                startingPart = radialDecouplers[startingPartIndex - activeEngineParts.Count];
-                               
-                failureType = FailureType.radialDecoupler;
-                decouplerForceCnt = 0;
-            }
-            else
-            {
-                startingPart = activeEngineParts[startingPartIndex];
-                failureType = FailureType.engine;
-
-                // Get the engine module for the part.
-                startingPartEngineModule = startingPart.Modules.OfType<ModuleEngines>().Single();
-            }
-#endif
             // Setup tick information for the part explosion loop.
             ticksBetweenPartFailures = (int)(KLFUtils.GameTicksPerSecond * KLFSettings.Instance.DelayBetweenPartFailures);
             if (ticksBetweenPartFailures == 0) ticksBetweenPartFailures = (int)(KLFUtils.GameTicksPerSecond / 20f + 1f);

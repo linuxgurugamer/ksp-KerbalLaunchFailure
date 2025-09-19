@@ -34,7 +34,7 @@ namespace KerbalLaunchFailure
         /// <summary>
         /// The plugin's PluginData directory.
         /// </summary>
-        public const string LocalPluginDataPath = "GameData/KerbalLaunchFailure/PluginData/";
+       // public const string LocalPluginDataPath = "GameData/KerbalLaunchFailure/PluginData/";
 
         /// <summary>
         /// Is the failure script active?
@@ -123,9 +123,6 @@ namespace KerbalLaunchFailure
         {
             if (toolbarControl != null)
             {
-               // GameEvents.onGUIApplicationLauncherReady.Remove(OnGUIApplicationLauncherReady);
-                //ApplicationLauncher.Instance.RemoveModApplication(launcherButton);
-                //launcherButton = null;
                 toolbarControl.OnDestroy();
                 Destroy(toolbarControl);
             }
@@ -252,9 +249,6 @@ namespace KerbalLaunchFailure
             if (!HighLogic.CurrentGame.Parameters.CustomParams<KLF_1>().enabled)
                 return;
 
-            // float throttle = FlightGlobals.ActiveVessel.ctrlState.mainThrottle;
-            // Log.Info("FixedUpdate throttle: " + throttle.ToString());
-
             // Only run if the failure script is active and the game is not paused.
             if ((failure != null && failure.failurecomplete) || (isFailureScriptActive && !isGamePaused))
             {
@@ -284,7 +278,6 @@ namespace KerbalLaunchFailure
                 
                 SoundManager.LoadSound(LocalAlarmSoundDir + KLFSettings.Instance.AlarmSoundFile, "AlarmSound");
                 alarmSound = new FXGroup("AlarmSound");
-//                SoundManager.CreateFXSound(FlightGlobals.ActiveVessel.rootPart, alarmSound, "AlarmSound", true, 50f);
                 SoundManager.CreateFXSound(null, alarmSound, "AlarmSound", true, 50f);
 
                 ActivateFailureRun();
